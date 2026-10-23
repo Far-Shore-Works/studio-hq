@@ -97,6 +97,8 @@ const LABEL: Record<string, string> = {
   products: "product",
   meta: "page info",
   ledger: "ledger line",
+  docs: "doc",
+  hours: "weekly hours",
 };
 const FIELD: Record<string, string> = {
   sort_order: "order",
@@ -106,6 +108,7 @@ const FIELD: Record<string, string> = {
   author_id: "author",
   step_id: "step",
   amount_usd: "amount",
+  week_start: "week",
 };
 
 /** Who did it, in words: "Chris", "Aaron's Claude", "an agent (service role)", "the import". */
@@ -132,7 +135,7 @@ export function changeSummary(e: AuditEntry): string {
     }
     const to = (v as Row)?.to;
     const label = FIELD[k] || k.replace(/_/g, " ");
-    parts.push(typeof to === "string" && to.length <= 40 ? `${label} → ${to}` : to == null ? `${label} cleared` : `${label} edited`);
+    parts.push((typeof to === "string" && to.length <= 40) || typeof to === "number" ? `${label} → ${to}` : to == null ? `${label} cleared` : `${label} edited`);
   }
   return parts.join(", ") || "edited";
 }

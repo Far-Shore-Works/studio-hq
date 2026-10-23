@@ -5,6 +5,7 @@
 //   ?out=1        signed out (the sign-in screen)
 //   ?as=aaron     view as Aaron instead of Chris
 //   ?outsider=1   signed in with an email that isn't on the list
+//   ?missing=docs,hours   those tables error as if the database migration hadn't been applied
 
 type Row = Record<string, unknown>;
 type Cb = () => void;
@@ -21,10 +22,13 @@ const ready = fetch("/preview/seed.local.json")
     db = seed || {};
     db.members = qs.get("outsider") ? [] : (db.members || []).map((m) => ({ ...m, user_id: m.role === ME_ROLE ? USER_ID : null }));
   });
+const missing = (qs.get("missing") || "").split(",").filter(Boolean);
 const emit = () => listeners.forEach((f) => setTimeout(f, 30));
 
 function query(table: string) {
-  let rows = () => (db[table] || []).slice();
+  // Like the real row-level security on docs: shared docs and the viewer's own private ones.
+  const myId = () => (db.members || []).find((m) => m.role === ME_ROLE)?.id;
+  let rows = () => (db[table] || []).filter((r) => table !== "docs" || r.visibility === "shared" || r.owner === myId());
   let single = false;
   const api = {
     select: () => api,
@@ -49,6 +53,7 @@ function query(table: string) {
     },
     then: (res: (v: { data: unknown; error: null }) => void) =>
       ready.then(() => {
+        if (missing.includes(table)) return res({ data: null, error: { code: "42P01", message: "relation does not exist" } } as never);
         const r = rows();
         res({ data: single ? r[0] || null : r, error: null });
       }),

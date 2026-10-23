@@ -10,6 +10,8 @@ import { Overview } from "@/components/overview";
 import { Gameplan } from "@/components/gameplan";
 import { Decisions } from "@/components/decisions";
 import { Products } from "@/components/products";
+import { Founders } from "@/components/founders";
+import { Docs } from "@/components/docs";
 import { Thread } from "@/components/thread";
 import { Skel } from "@/components/bits";
 import { AuthGate } from "@/components/auth";
@@ -37,6 +39,8 @@ const NAV = [
   { id: "gameplan", label: "Gameplan" },
   { id: "decisions", label: "Decisions" },
   { id: "products", label: "Products" },
+  { id: "founders", label: "Founders" },
+  { id: "docs", label: "Docs" },
   { id: "changes", label: "Changes" },
   { id: "thread", label: "Thread", phoneOnly: true },
 ];
@@ -65,6 +69,8 @@ function Page() {
             <Gameplan />
             <Decisions />
             <Products />
+            <Founders />
+            <Docs />
             <Changes />
           </div>
           <aside className="min-w-0 lg:sticky lg:top-[68px] lg:h-[min(calc(100vh-84px),1000px)]" aria-label="Team thread">

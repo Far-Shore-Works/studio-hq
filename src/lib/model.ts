@@ -380,3 +380,239 @@ export function ago(iso: string, now = Date.now()): string {
 export function firstName(full: string): string {
   return (full || "").trim().split(/\s+/)[0] || "";
 }
+
+// ---- Docs -------------------------------------------------------------------------------------
+export const DOC_FOLDERS = ["Plan", "Money", "Decisions", "Game", "Admin"] as const;
+export type DocFolder = (typeof DOC_FOLDERS)[number];
+export type Visibility = "shared" | "private";
+
+export interface Doc {
+  id: string;
+  folder: DocFolder;
+  title: string;
+  slug: string;
+  body: string;
+  visibility: Visibility;
+  /** members.id of the founder who owns it. A private doc is only ever returned to its owner. */
+  owner: string;
+  sourcePath: string;
+  updatedAt: string;
+}
+export function normDoc(id: string, d: Raw): Doc | null {
+  if (!d || typeof d !== "object") return null;
+  const title = str(d.title).trim();
+  const slug = str(d.slug).trim();
+  const folder = str(d.folder) as DocFolder;
+  if (!title || !slug || !DOC_FOLDERS.includes(folder)) return null;
+  return {
+    id,
+    folder,
+    title,
+    slug,
+    body: str(d.bodyMd),
+    visibility: d.visibility === "shared" ? "shared" : "private",
+    owner: str(d.owner),
+    sourcePath: str(d.sourcePath).trim(),
+    updatedAt: str(d.updatedAt),
+  };
+}
+
+/** Plain text of some markdown, for searching and snippets (no syntax characters, one line). */
+export function plainText(md: string): string {
+  return md
+    .replace(/```[\s\S]*?```/g, (m) => m.replace(/```\w*/g, " "))
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/^[ \t]*(?:[#>]+|[-*+]|\d+\.)[ \t]+/gm, "")
+    .replace(/[`*_~|]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+export interface DocHit {
+  doc: Doc;
+  score: number;
+  /** A short piece of the body around the first match; "" when only the title matched. */
+  snippet: string;
+}
+/** Every word of the query must appear somewhere in the title, folder or body (case-insensitive). Title
+ *  matches rank first. An empty query returns every doc in folder order, then title. */
+export function searchDocs(docs: Doc[], query: string, folder: DocFolder | "all" = "all"): DocHit[] {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const pool = docs.filter((d) => folder === "all" || d.folder === folder);
+  const byFolder = (a: Doc, b: Doc) => DOC_FOLDERS.indexOf(a.folder) - DOC_FOLDERS.indexOf(b.folder) || a.title.localeCompare(b.title);
+  if (!words.length) return pool.slice().sort(byFolder).map((doc) => ({ doc, score: 0, snippet: "" }));
+  const hits: DocHit[] = [];
+  for (const doc of pool) {
+    const title = doc.title.toLowerCase();
+    const text = plainText(doc.body);
+    const low = text.toLowerCase();
+    const head = (title + " " + doc.folder.toLowerCase() + " " + doc.slug).toLowerCase();
+    if (!words.every((w) => head.includes(w) || low.includes(w))) continue;
+    let score = 0;
+    for (const w of words) score += (title.includes(w) ? 10 : 0) + (head.includes(w) ? 2 : 0) + Math.min(5, low.split(w).length - 1);
+    let snippet = "";
+    const at = words.map((w) => low.indexOf(w)).filter((i) => i >= 0).sort((a, b) => a - b)[0];
+    if (at !== undefined && !words.every((w) => title.includes(w))) {
+      let from = Math.max(0, at - 50);
+      if (from > 0) from = text.indexOf(" ", from) + 1 || from; // start on a whole word
+      snippet = (from > 0 ? "…" : "") + text.slice(from, at + 110).trim() + (at + 110 < text.length ? "…" : "");
+    }
+    hits.push({ doc, score, snippet });
+  }
+  return hits.sort((a, b) => b.score - a.score || byFolder(a.doc, b.doc));
+}
+
+// ---- Hours ------------------------------------------------------------------------------------
+export interface HoursRow {
+  id: string;
+  memberId: string;
+  /** Monday of the week, YYYY-MM-DD. */
+  weekStart: string;
+  hours: number;
+  note: string;
+}
+export function normHours(id: string, d: Raw): HoursRow | null {
+  if (!d || typeof d !== "object") return null;
+  const weekStart = str(d.weekStart);
+  const hours = num(d.hours, NaN);
+  if (!isDay(weekStart) || !Number.isFinite(hours) || hours < 0) return null;
+  return { id, memberId: str(d.memberId), weekStart, hours, note: str(d.note).trim() };
+}
+/** Monday of the week that contains `day` (YYYY-MM-DD), as YYYY-MM-DD. */
+export function weekStartOf(day: string): string {
+  const [y, m, d] = day.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  const dow = (dt.getUTCDay() + 6) % 7; // Monday = 0
+  dt.setUTCDate(dt.getUTCDate() - dow);
+  return dt.toISOString().slice(0, 10);
+}
+export function addDays(day: string, n: number): string {
+  const [y, m, d] = day.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + n);
+  return dt.toISOString().slice(0, 10);
+}
+/** "Oct 19 – 25" for the week starting on a Monday. */
+export function weekLabel(weekStart: string): string {
+  const end = addDays(weekStart, 6);
+  const a = dayLabel(weekStart, weekStart);
+  const b = dayLabel(end, end);
+  return a.slice(0, 3) === b.slice(0, 3) ? `${a.replace(/,.*/, "")} – ${+end.slice(8)}` : `${a.replace(/,.*/, "")} – ${b.replace(/,.*/, "")}`;
+}
+export function fmtHours(n: number): string {
+  const r = Math.round(n * 10) / 10;
+  return Number.isInteger(r) ? String(r) : r.toFixed(1);
+}
+export interface HoursStats {
+  /** Hours across every logged week. */
+  total: number;
+  /** Weeks with an entry. */
+  logged: number;
+  /** Average per week over the last 4 weeks, this week included. Starts at the first logged week, so a new
+   *  log isn't diluted by weeks before it began; a week after that with no entry counts as 0. */
+  avg4: number;
+  /** How many weeks that average is over (1 to 4). */
+  weeksCounted: number;
+}
+export function hoursStats(rows: HoursRow[], memberId: string, today = localDay()): HoursStats {
+  const mine = rows.filter((r) => r.memberId === memberId);
+  const total = mine.reduce((a, r) => a + r.hours, 0);
+  if (!mine.length) return { total: 0, logged: 0, avg4: 0, weeksCounted: 0 };
+  const cur = weekStartOf(today);
+  const first = mine.map((r) => r.weekStart).sort()[0];
+  const windowStart = addDays(cur, -21);
+  const from = first > windowStart ? first : windowStart;
+  const weeksCounted = Math.max(1, Math.round(dayDiff(cur, weekStartOf(from)) / 7) + 1);
+  const inWindow = mine.filter((r) => r.weekStart >= weekStartOf(from) && r.weekStart <= cur).reduce((a, r) => a + r.hours, 0);
+  return { total, logged: mine.length, avg4: inWindow / weeksCounted, weeksCounted };
+}
+
+// ---- Money in ---------------------------------------------------------------------------------
+/** Founder terms item 7 (draft v2): Chris's first $500 of approved costs is a gift to the studio; every other
+ *  approved cost, and Aaron's from his first dollar, is repaid before profit is split. */
+export const GIFT_THRESHOLD_USD = 500;
+export interface LedgerRow {
+  id: string;
+  date: string;
+  item: string;
+  vendor: string;
+  amount: number;
+  paidBy: string;
+  approvedBy: string;
+  category: string;
+  notes: string;
+}
+export function normLedger(id: string, d: Raw): LedgerRow | null {
+  if (!d || typeof d !== "object") return null;
+  const amount = num(d.amountUsd, NaN);
+  if (!Number.isFinite(amount)) return null;
+  return {
+    id,
+    date: str(d.date),
+    item: str(d.item).trim(),
+    vendor: str(d.vendor).trim(),
+    amount,
+    paidBy: str(d.paidBy).trim(),
+    approvedBy: str(d.approvedBy).trim(),
+    category: str(d.category).trim(),
+    notes: str(d.notes).trim(),
+  };
+}
+export interface FounderMoney {
+  /** Everything this founder paid, approved or not. */
+  paid: number;
+  /** Paid with an approver on the line: what counts under the terms. */
+  approved: number;
+  /** Paid with nobody's approval recorded yet: stays personal until the founders agree otherwise. */
+  unapproved: number;
+  purchases: number;
+  /** Part of `approved` that is a gift to the studio (Chris only, up to the threshold). */
+  gift: number;
+  /** Part of `approved` the studio repays before splitting profit. */
+  owedBack: number;
+}
+export interface MoneyIn {
+  chris: FounderMoney;
+  aaron: FounderMoney;
+  /** Lines whose paid_by is neither founder (for example "Studio"). */
+  other: { amount: number; purchases: number };
+  threshold: number;
+  /** 0 to 1: how much of Chris's gift threshold his approved costs fill. */
+  giftProgress: number;
+}
+/** Totals by paid_by. `names` are the words that identify each founder in the ledger (role, first name). */
+export function moneyIn(rows: LedgerRow[], names: Record<Role, string[]>): MoneyIn {
+  const empty = (): FounderMoney => ({ paid: 0, approved: 0, unapproved: 0, purchases: 0, gift: 0, owedBack: 0 });
+  const out: MoneyIn = { chris: empty(), aaron: empty(), other: { amount: 0, purchases: 0 }, threshold: GIFT_THRESHOLD_USD, giftProgress: 0 };
+  const who = (paidBy: string): Role | null => {
+    const p = paidBy.trim().toLowerCase();
+    if (!p) return null;
+    for (const r of ["chris", "aaron"] as Role[]) if (names[r].some((n) => n && (p === n || p.split(/[\s,&/+]+/)[0] === n))) return r;
+    return null;
+  };
+  for (const row of rows) {
+    const r = who(row.paidBy);
+    if (!r) {
+      out.other.amount += row.amount;
+      out.other.purchases++;
+      continue;
+    }
+    const f = out[r];
+    f.paid += row.amount;
+    f.purchases++;
+    if (row.approvedBy) f.approved += row.amount;
+    else f.unapproved += row.amount;
+  }
+  out.chris.gift = Math.min(out.chris.approved, GIFT_THRESHOLD_USD);
+  out.chris.owedBack = Math.max(0, out.chris.approved - GIFT_THRESHOLD_USD);
+  out.aaron.owedBack = out.aaron.approved;
+  out.giftProgress = Math.min(1, out.chris.approved / GIFT_THRESHOLD_USD);
+  const cents = (n: number) => Math.round(n * 100) / 100;
+  for (const f of [out.chris, out.aaron]) for (const k of ["paid", "approved", "unapproved", "gift", "owedBack"] as const) f[k] = cents(f[k]);
+  return out;
+}
+/** Dollars with cents only when there are some: $11.25, $500. */
+export function dollars(n: number): string {
+  const r = Math.round(n * 100) / 100;
+  return "$" + (Number.isInteger(r) ? r.toLocaleString("en-US") : r.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+}

@@ -47,13 +47,32 @@ For **code changes**, clone this repo and open a pull request; GitHub Actions ch
 | `names` | a name idea | `name`, `note`, `sort_order`, `votes` (`{member_id: true}`) |
 | `products` | a product | `sort_order`, `name`, `status`, `platforms`, `summary`, `next`, `in_company`, `repo` |
 | `meta` | page text | `id` = `studio` (`data`: name, subtitle, links) or `status` (`data`: summary, asOf) |
-| `ledger` | a purchase | mirrors `ledger/expenses.csv` in the studio repo (the CSV stays the record) |
+| `ledger` | a purchase | mirrors `ledger/expenses.csv` in the studio repo (the CSV stays the record); the Founders panel totals it by `paid_by` |
+| `docs` | a markdown document in the Docs tab | `folder` (Plan, Money, Decisions, Game, Admin), `title`, `slug` (unique), `body_md`, `visibility` (`shared` or `private`), `owner` (a `members.id`), `source_path`. Founders read only; agents write (see below) |
+| `hours` | one founder's hours for one week | `member_id`, `week_start` (a Monday), `hours`, `note`. Both founders read all rows; each writes only their own in the app |
 | `members` | a founder | `role` (chris / aaron), `name`, `email`, `alt_emails` (other addresses that may sign in), `user_id` (the account that last signed in) |
 | `team` (view) | old `team/chris`, `team/aaron` | `id` = role, `member_id` |
 | `audit_log` | one change | `at`, `table_name`, `row_id`, `op`, `who` (chris / aaron when made in the app), `via` (`app`, your `actor`, or the database role), `changes` |
 
 Every data table also has `created_at`, `created_by`, `updated_at`, `updated_by` (filled by the database) and the
 write-only `actor` column.
+
+## Docs: shared and private
+
+A doc is **shared** (both founders read it) or **private** (only its `owner` reads it). Row-level security does this on
+the database, so a private doc is never sent to the other founder's browser, REST client or realtime feed, and
+the audit log never records a private doc or any doc's text. Founders can't write docs from the page; agents do:
+
+```sh
+bin/studio-hq docs-sync <file.md> --folder Plan --visibility private [--title T] [--slug S]
+```
+
+It upserts by `slug` (default: the file name; `README.md` becomes `<folder>-readme`), refuses secrets, files
+over 300,000 characters, and anything under the never-upload folders, and only marks a file `shared` when it comes
+from the shared studio repo (or the founder said to share it). **Limit of this protection:** anyone with
+owner-level database access (the Supabase dashboard, or an agent connected through the Supabase MCP as an
+organization member) bypasses row-level security and can read every doc, private ones included. Keep that in
+mind before putting something private here.
 
 ## The rule: label every write with `actor`
 

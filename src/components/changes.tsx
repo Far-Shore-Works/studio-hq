@@ -13,7 +13,7 @@ import { Empty, Section, Seg, Skel } from "./bits";
 type Filter = "all" | "people" | "agents";
 
 export function Changes() {
-  const { audit, ready, roleName, steps, decisions, names, products } = useStore();
+  const { audit, ready, roleName, steps, decisions, names, products, docs } = useStore();
   const now = useNow();
   const [filter, setFilter] = useState<Filter>("all");
   const [open, setOpen] = useState(false);
@@ -24,6 +24,7 @@ export function Changes() {
     decisions.forEach((d) => m.set("decisions/" + d.id, d.title));
     names.forEach((n) => m.set("names/" + n.id, n.name));
     products.forEach((p) => m.set("products/" + p.id, p.name));
+    docs.forEach((d) => m.set("docs/" + d.id, d.title));
     return (e: AuditEntry) => {
       const t = m.get(e.table + "/" + e.rowId);
       if (t) return t;
@@ -31,7 +32,7 @@ export function Changes() {
       const v = c.title ?? c.name ?? c.text ?? c.item;
       return typeof v === "string" ? v : e.table === "meta" ? (e.rowId === "status" ? "status line" : "page info") : "";
     };
-  }, [steps, decisions, names, products]);
+  }, [steps, decisions, names, products, docs]);
 
   const isAgent = (e: AuditEntry) => !e.who;
   const list = audit.filter((e) => e.via !== "migration" && (filter === "all" || (filter === "agents" ? isAgent(e) : !isAgent(e))));

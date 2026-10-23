@@ -1,8 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import {
-  normComment, normDecision, normMessage, normMeta, normName, normProduct, normStatus, normStep, normTeam, roleOf,
-  type Comment, type Decision, type Message, type Meta, type NameIdea, type Product, type Role, type StatusDoc, type Step, type Team,
+  normComment, normDecision, normDoc, normHours, normLedger, normMessage, normMeta, normName, normProduct, normStatus, normStep, normTeam, roleOf,
+  type Comment, type Decision, type Doc, type HoursRow, type LedgerRow, type Message, type Meta, type NameIdea, type Product, type Role, type StatusDoc, type Step, type Team,
 } from "./model";
 import { normAudit, planUpdate, rowToDoc, docToRow, type AuditEntry, type Row } from "./rows";
 import { supabase } from "@/lib/supabase";
@@ -12,7 +12,9 @@ import { supabase } from "@/lib/supabase";
 // what a signed-in founder can see and change; the database stamps who changed what into audit_log.
 //
 // Tables: steps, comments (step threads), messages (team thread), decisions, names, products,
-// meta (studio + status), members (who is Chris and who is Aaron), audit_log (the Changes view).
+// meta (studio + status), members (who is Chris and who is Aaron), audit_log (the Changes view),
+// ledger (money in), docs (the Docs tab; row-level security returns shared docs and your own private ones)
+// and hours (each founder's weekly hours).
 
 export interface Profile {
   id: string;
@@ -31,8 +33,11 @@ export interface Member {
 }
 
 export type Mode = "loading" | "live" | "offline" | "error";
-const KEYS = ["steps", "comments", "messages", "decisions", "names", "products", "meta", "members", "audit"] as const;
+const KEYS = ["steps", "comments", "messages", "decisions", "names", "products", "meta", "members", "audit", "ledger", "docs", "hours"] as const;
 type Key = (typeof KEYS)[number];
+/** Tables added after launch. If the database doesn't have them yet the page still works and says so, and
+ *  each one gets its own realtime channel only once a read has proven the table exists. */
+const OPTIONAL: Key[] = ["ledger", "docs", "hours"];
 const TABLE: Record<Key, string> = {
   steps: "steps",
   comments: "comments",
@@ -43,6 +48,9 @@ const TABLE: Record<Key, string> = {
   meta: "meta",
   members: "members",
   audit: "audit_log",
+  ledger: "ledger",
+  docs: "docs",
+  hours: "hours",
 };
 
 interface Store {
@@ -59,6 +67,12 @@ interface Store {
   status: StatusDoc | null;
   team: Team;
   audit: AuditEntry[];
+  ledger: LedgerRow[];
+  docs: Doc[];
+  hours: HoursRow[];
+  members: Member[];
+  /** Optional tables the database doesn't have yet (the migration hasn't been applied). */
+  unavailable: Record<"ledger" | "docs" | "hours", boolean>;
   /** My members.id (the id written into agree, votes and authorId). */
   me: string | null;
   role: Role | null;
@@ -68,6 +82,8 @@ interface Store {
   roleProfile: (r: Role) => Profile | null;
   update: (path: string, fields: Record<string, unknown>) => Promise<boolean>;
   add: (collection: string, doc: Record<string, unknown>) => Promise<boolean>;
+  /** Save my hours for a week (Monday, YYYY-MM-DD): creates the row or edits mine. */
+  logHours: (weekStart: string, hours: number, note: string) => Promise<boolean>;
   toasts: Toast[];
   toast: (text: string, tone?: "ok" | "err") => void;
   dismiss: (id: number) => void;
@@ -121,6 +137,10 @@ export function StoreProvider({ children, userId, email }: { children: ReactNode
   const [status, setStatus] = useState<StatusDoc | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [audit, setAudit] = useState<AuditEntry[]>([]);
+  const [ledger, setLedger] = useState<LedgerRow[]>([]);
+  const [docs, setDocs] = useState<Doc[]>([]);
+  const [hours, setHours] = useState<HoursRow[]>([]);
+  const [unavailable, setUnavailable] = useState({ ledger: false, docs: false, hours: false });
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [attempt, setAttempt] = useState(0);
   const queue = useRef(new Map<string, Promise<unknown>>());
@@ -144,14 +164,19 @@ export function StoreProvider({ children, userId, email }: { children: ReactNode
       if (k === "comments") q = q.order("created_at", { ascending: false }).limit(500);
       if (k === "messages") q = q.order("created_at", { ascending: false }).limit(200);
       if (k === "audit") q = q.order("at", { ascending: false }).limit(150);
+      if (k === "hours") q = q.order("week_start", { ascending: false }).limit(400);
       const { data, error } = await q;
       if (!alive) return;
       if (error) {
         mark(k);
-        if (!loaded) setMode("error");
+        if (OPTIONAL.includes(k)) setUnavailable((u) => (u[k as "docs"] ? u : { ...u, [k]: true }));
+        else if (!loaded) setMode("error");
         return;
       }
-      loaded++;
+      if (OPTIONAL.includes(k)) {
+        setUnavailable((u) => (u[k as "docs"] ? { ...u, [k]: false } : u));
+        watch(k);
+      } else loaded++;
       const rows = (data || []) as Row[];
       switch (k) {
         case "steps":
@@ -197,9 +222,27 @@ export function StoreProvider({ children, userId, email }: { children: ReactNode
         case "audit":
           setAudit(rows.map(normAudit).filter((x): x is AuditEntry => !!x));
           break;
+        case "ledger":
+          setLedger(list(rows, normLedger).sort((a, b) => b.date.localeCompare(a.date)));
+          break;
+        case "docs":
+          setDocs(list(rows, normDoc));
+          break;
+        case "hours":
+          setHours(list(rows, normHours));
+          break;
       }
       mark(k);
     };
+
+    // One realtime channel per optional table, opened after its first successful read.
+    const extra = new Map<Key, RealtimeChannel>();
+    function watch(k: Key) {
+      if (extra.has(k) || !alive) return;
+      const ch = supabase.channel("studio-hq-" + TABLE[k]).on("postgres_changes", { event: "*", schema: "public", table: TABLE[k] }, () => soon(k));
+      extra.set(k, ch);
+      ch.subscribe();
+    }
 
     const timers = new Map<Key, ReturnType<typeof setTimeout>>();
     const soon = (k: Key) => {
@@ -211,7 +254,7 @@ export function StoreProvider({ children, userId, email }: { children: ReactNode
     KEYS.forEach((k) => void read(k));
 
     let channel: RealtimeChannel | null = supabase.channel("studio-hq");
-    for (const k of KEYS) {
+    for (const k of KEYS.filter((x) => !OPTIONAL.includes(x))) {
       // Every change, deletes included, also writes an audit_log row; deletes aren't published (they would
       // skip row-level security), so an audit event refreshes everything.
       channel = channel.on("postgres_changes", { event: "*", schema: "public", table: TABLE[k] }, () => {
@@ -237,6 +280,7 @@ export function StoreProvider({ children, userId, email }: { children: ReactNode
       document.removeEventListener("visibilitychange", onVis);
       window.removeEventListener("online", all);
       if (channel) void supabase.removeChannel(channel);
+      extra.forEach((c) => void supabase.removeChannel(c));
     };
   }, [attempt]);
 
@@ -295,6 +339,35 @@ export function StoreProvider({ children, userId, email }: { children: ReactNode
     [fail, me],
   );
 
+  const logHours = useCallback(
+    async (weekStart: string, value: number, note: string) => {
+      if (!me) return false;
+      try {
+        await serial("hours/" + me + "/" + weekStart, async () => {
+          const body = { hours: Math.round(value * 100) / 100, note: note.trim() || null };
+          const edit = async (id: string) => {
+            const { error } = await supabase.from("hours").update(body).eq("id", id);
+            if (error) throw error;
+          };
+          const mine = hours.find((h) => h.memberId === me && h.weekStart === weekStart);
+          if (mine) return edit(mine.id);
+          const { error } = await supabase.from("hours").insert({ member_id: me, week_start: weekStart, ...body });
+          if (!error) return;
+          if (error.code !== "23505") throw error;
+          // The week already has a row this page hadn't read yet: edit it instead.
+          const found = await supabase.from("hours").select("id").eq("member_id", me).eq("week_start", weekStart).maybeSingle();
+          if (found.error || !found.data) throw error;
+          return edit(String((found.data as { id: unknown }).id));
+        });
+        return true;
+      } catch (e) {
+        fail(e as DbErr);
+        return false;
+      }
+    },
+    [serial, fail, me, hours],
+  );
+
   const profiles = useMemo(() => {
     const p: Record<string, Profile> = {};
     members.forEach((m) => (p[m.id] = { id: m.id, name: m.name, avatarUrl: m.avatarUrl, color: "" }));
@@ -325,6 +398,11 @@ export function StoreProvider({ children, userId, email }: { children: ReactNode
     status,
     team,
     audit,
+    ledger,
+    docs,
+    hours,
+    members,
+    unavailable,
     me,
     role,
     canWrite: !!me && mode !== "offline",
@@ -333,6 +411,7 @@ export function StoreProvider({ children, userId, email }: { children: ReactNode
     roleProfile,
     update,
     add,
+    logHours,
     toasts,
     toast,
     dismiss,
