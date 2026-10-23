@@ -9,7 +9,6 @@ import { UiProvider, useUi } from "@/components/ui";
 import { Overview } from "@/components/overview";
 import { Gameplan } from "@/components/gameplan";
 import { Decisions } from "@/components/decisions";
-import { Names } from "@/components/names";
 import { Products } from "@/components/products";
 import { Thread } from "@/components/thread";
 import { Skel } from "@/components/bits";
@@ -37,7 +36,6 @@ const NAV = [
   { id: "overview", label: "Overview" },
   { id: "gameplan", label: "Gameplan" },
   { id: "decisions", label: "Decisions" },
-  { id: "names", label: "Names" },
   { id: "products", label: "Products" },
   { id: "changes", label: "Changes" },
   { id: "thread", label: "Thread", phoneOnly: true },
@@ -66,7 +64,6 @@ function Page() {
           <div className="min-w-0 space-y-6">
             <Gameplan />
             <Decisions />
-            <Names />
             <Products />
             <Changes />
           </div>

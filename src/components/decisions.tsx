@@ -26,6 +26,9 @@ export function Decisions() {
         ) : null
       }
     >
+      <p className="mb-3 text-[13.5px] text-muted">
+        Name: <span className="font-semibold text-ink">Far Shore Works</span> (decided Oct 22)
+      </p>
       <AnimatePresence initial={false}>{proposing && <ProposeForm key="form" close={() => setProposing(false)} />}</AnimatePresence>
       {!ready.decisions ? (
         <SkelRows n={4} />
