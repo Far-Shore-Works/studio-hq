@@ -17,6 +17,8 @@ declare
   v_j jsonb;
   v_chris_email text;
   v_aaron_email text;
+  v_alt_email text;
+  v_alt uuid := gen_random_uuid();
 
 begin
   select id into v_chris_mid from public.members where role = 'chris';
@@ -159,6 +161,17 @@ begin
   if v_n = 1 then v_pass := v_pass + 1; else v_fail := v_fail + 1; v_out := v_out || 'FAIL audit: agent actor not recorded'; end if;
   select count(*) into v_n from public.steps where id = 's630' and actor is null and updated_by = 'claude-code:aaron';
   if v_n = 1 then v_pass := v_pass + 1; else v_fail := v_fail + 1; v_out := v_out || 'FAIL audit: actor not cleared / updated_by not set'; end if;
+
+  -- 5b. A founder's alternate address (members.alt_emails) also gets in.
+  select alt_emails[1] into v_alt_email from public.members where role = 'chris';
+  if v_alt_email is not null and not exists (select 1 from auth.users where lower(email) = v_alt_email) then
+    insert into auth.users (id, email, email_confirmed_at, aud, role) values (v_alt, v_alt_email, now(), 'authenticated', 'authenticated');
+    perform set_config('request.jwt.claims', json_build_object('sub', v_alt, 'role', 'authenticated')::text, true);
+    execute 'set local role authenticated';
+    execute 'select count(*) from public.steps' into v_n;
+    execute 'reset role';
+    if v_n >= 33 then v_pass := v_pass + 1; else v_fail := v_fail + 1; v_out := v_out || 'FAIL alt email: founder alternate address locked out'; end if;
+  end if;
 
   -- 6. Regression cases from the security review
   perform set_config('request.jwt.claims', json_build_object('sub', v_chris, 'role', 'authenticated')::text, true);

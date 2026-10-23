@@ -25,6 +25,7 @@ export interface Member {
   role: Role;
   name: string;
   email: string;
+  altEmails: string[];
   userId: string;
   avatarUrl: string;
 }
@@ -186,7 +187,8 @@ export function StoreProvider({ children, userId, email }: { children: ReactNode
                 id: String(r.id),
                 role: r.role as Role,
                 name: String(r.name || ""),
-                email: String(r.email || ""),
+                email: String(r.email || "").toLowerCase(),
+                altEmails: Array.isArray(r.alt_emails) ? (r.alt_emails as unknown[]).map((e) => String(e).toLowerCase()) : [],
                 userId: String(r.user_id || ""),
                 avatarUrl: String(r.avatar_url || ""),
               })),
@@ -238,7 +240,9 @@ export function StoreProvider({ children, userId, email }: { children: ReactNode
     };
   }, [attempt]);
 
-  const meRow = members.find((m) => m.userId === userId) || null;
+  // Who I am: the founder whose email (or alternate email) this account signed in with.
+  const myEmail = email.trim().toLowerCase();
+  const meRow = members.find((m) => !!myEmail && (m.email === myEmail || m.altEmails.includes(myEmail))) || members.find((m) => m.userId === userId) || null;
   const me = meRow ? meRow.id : null;
   const team: Team = useMemo(() => {
     const t: Record<string, unknown> = {};

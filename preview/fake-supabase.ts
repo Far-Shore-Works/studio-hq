@@ -19,7 +19,7 @@ const ready = fetch("/preview/seed.local.json")
   .catch(() => ({}))
   .then((seed: Record<string, Row[]>) => {
     db = seed || {};
-    db.members = (db.members || []).map((m) => ({ ...m, user_id: m.role === ME_ROLE && !qs.get("outsider") ? USER_ID : null }));
+    db.members = qs.get("outsider") ? [] : (db.members || []).map((m) => ({ ...m, user_id: m.role === ME_ROLE ? USER_ID : null }));
   });
 const emit = () => listeners.forEach((f) => setTimeout(f, 30));
 

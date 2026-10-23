@@ -22,9 +22,10 @@ export function AuthGate({ children }: { children: (session: Session) => ReactNo
     const check = async (session: Session | null) => {
       if (!session) return alive && setGate({ state: "out" });
       // A member row comes back only for a linked founder (RLS); anyone else gets none.
-      const { data, error } = await supabase.from("members").select("id").eq("user_id", session.user.id).maybeSingle();
+      // Rows come back only when this account's confirmed email is on the founders list (RLS).
+      const { data, error } = await supabase.from("members").select("id").limit(1);
       if (!alive) return;
-      if (data) setGate({ state: "in", session });
+      if (data && data.length) setGate({ state: "in", session });
       else if (error && !/permission|JWT/i.test(error.message)) setGate({ state: "in", session }); // offline: let the app show its own banner
       else setGate({ state: "outsider", email: session.user.email || "" });
     };

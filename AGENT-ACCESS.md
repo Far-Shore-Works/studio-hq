@@ -18,7 +18,8 @@ either of us can see what the other person, or the other person's agent, did.
 1. **Accept the Supabase invite.** Chris invites each founder to the Far Shore Works organization in Supabase as a
    *Developer* (Organization → Team → Invite). Accept it from the email, signing in to Supabase or creating a
    free account with the same address. Being in the org also lets the sign-in emails reach you: Supabase's
-   built-in mailer only sends to people in the org.
+   built-in mailer only sends sign-in links to the addresses of people in the org. If your Supabase login uses
+   a different address than your studio email, add it to your row's `alt_emails` (or ask the other founder to).
 2. **Add a Supabase MCP server scoped to this project.** In a terminal:
 
    ```sh
@@ -47,7 +48,7 @@ For **code changes**, clone this repo and open a pull request; GitHub Actions ch
 | `products` | a product | `sort_order`, `name`, `status`, `platforms`, `summary`, `next`, `in_company`, `repo` |
 | `meta` | page text | `id` = `studio` (`data`: name, subtitle, links) or `status` (`data`: summary, asOf) |
 | `ledger` | a purchase | mirrors `ledger/expenses.csv` in the studio repo (the CSV stays the record) |
-| `members` | a founder | `role` (chris / aaron), `name`, `email`, `user_id` (filled at first sign-in) |
+| `members` | a founder | `role` (chris / aaron), `name`, `email`, `alt_emails` (other addresses that may sign in), `user_id` (the account that last signed in) |
 | `team` (view) | old `team/chris`, `team/aaron` | `id` = role, `member_id` |
 | `audit_log` | one change | `at`, `table_name`, `row_id`, `op`, `who` (chris / aaron when made in the app), `via` (`app`, your `actor`, or the database role), `changes` |
 
@@ -110,10 +111,14 @@ from audit_log order by at desc limit 20;
 
 ## How the protection works (for reviewers)
 
-- Row-level security on every table: only an auth user linked to a `members` row (by confirmed email) can read
-  or write. The anonymous key in this repo can't read anything.
+- Row-level security on every table: only a signed-in account whose confirmed email is a founder's `email` or
+  one of their `alt_emails` can read or write. It's checked on every request, so changing the account's email
+  away from the list ends access at once. The anonymous key in this repo can't read anything.
 - Column privileges: the app can only edit listed columns. Agreements and votes change only through
   `set_agree()` and `set_vote()`, which write the caller's own key.
 - A Before User Created hook refuses sign-ups from any email that isn't in `members`.
-- `audit_log` is written only by a trigger; nobody can insert or edit it from the app.
+- `audit_log` is written only by a trigger after each real change; the app and `service_role` can't edit it,
+  and `TRUNCATE` is refused. The app can't set `actor`, so a founder can't pass an edit off as an agent's.
+- Agent deletes: `begin; set local studio.actor = 'claude-code:chris'; delete ...; commit;` labels the delete.
+- Realtime doesn't publish deletes (they bypass row-level security); the page refreshes from the audit event.
 - `tests/rls.sql` checks all of this against the live database inside a transaction that always rolls back.
