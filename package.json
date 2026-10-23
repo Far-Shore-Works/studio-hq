@@ -1,0 +1,34 @@
+{
+  "name": "studio-hq",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "description": "Studio HQ: the shared status page for the Far Shore Works founders. React + Tailwind on Vite, data in Supabase.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --test tests/"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.117.3",
+    "clsx": "2.1.1",
+    "framer-motion": "11.18.2",
+    "lucide-react": "1.56.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "tailwind-merge": "3.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "@vitejs/plugin-react": "6.1.2",
+    "autoprefixer": "10.6.1",
+    "postcss": "8.5.30",
+    "tailwindcss": "3.4.1",
+    "typescript": "6.0.3",
+    "vite": "8.3.4"
+  }
+}
