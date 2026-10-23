@@ -49,6 +49,9 @@ test("changes: audit rows read as plain sentences", () => {
   assert.equal(actorLabel(agent, (r) => r), "claude-code:aaron");
   const vote = normAudit({ id: 7, at: "", table_name: "names", row_id: "n", op: "update", who: "aaron", via: "app", changes: { votes: { from: {}, to: { m: true } } } })!;
   assert.equal(changeSummary(vote), "voted");
+  // The ledger mirror's csv_key is bookkeeping, not an edit anyone made.
+  const key = normAudit({ id: 9, at: "", table_name: "ledger", row_id: "1", op: "update", who: null, via: "Chris's agent", changes: { csv_key: { from: null, to: "kdad777ed4d661ecc" } } })!;
+  assert.equal(changeSummary(key), "edited");
   assert.equal(actorLabel(normAudit({ id: 8, at: "", table_name: "x", op: "insert", via: "service_role" })!, (r) => r), "An agent (service role)");
   assert.equal(normAudit({ table_name: "x", op: "truncate" }), null);
 });

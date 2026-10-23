@@ -127,6 +127,7 @@ export function changeSummary(e: AuditEntry): string {
   if (e.op === "delete") return "removed";
   const parts: string[] = [];
   for (const [k, v] of Object.entries(e.changes)) {
+    if (k === "csv_key") continue; // the ledger mirror's bookkeeping key, not something a person changed
     if (k === "agree" || k === "votes") {
       const from = keyCount((v as Row)?.from);
       const to = keyCount((v as Row)?.to);
