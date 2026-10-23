@@ -2,7 +2,7 @@ import { Children, isValidElement, type ReactNode } from "react";
 import Markdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ArrowUpRight } from "lucide-react";
-import type { Doc } from "@/lib/model";
+import { sourceLink, type Doc } from "@/lib/model";
 
 // Renders a doc's markdown as React elements. Nothing is injected as HTML, raw HTML in the text shows as
 // plain text, only http(s), mailto and in-page links become links, and images are never loaded (they show
@@ -20,9 +20,20 @@ export const slugify = (t: string) =>
     .trim()
     .replace(/\s+/g, "-");
 
+/** A relative link in a doc, as a link to that file on GitHub; null when the doc has no source or the link leaves the repo. */
+function repoLink(href: string, sourceUrl?: string): string | null {
+  if (!sourceUrl || !href || /^[a-z][a-z0-9+.-]*:/i.test(href) || href.startsWith("//")) return null;
+  try {
+    const u = new URL(href, sourceUrl);
+    return sourceLink(u.href) ? u.href : null;
+  } catch {
+    return null;
+  }
+}
+
 const base = (p: string) => p.split(/[?#]/)[0].split("/").pop()!.toLowerCase();
 
-export default function Md({ text, docs, onOpen }: { text: string; docs: Doc[]; onOpen: (slug: string) => void }) {
+export default function Md({ text, docs, onOpen, sourceUrl }: { text: string; docs: Doc[]; onOpen: (slug: string) => void; sourceUrl?: string }) {
   const heading = (Tag: "h3" | "h4" | "h5" | "h6"): Components["h1"] =>
     function H({ children }) {
       return (
@@ -47,7 +58,9 @@ export default function Md({ text, docs, onOpen }: { text: string; docs: Doc[]; 
             className="link"
             onClick={(e) => {
               e.preventDefault();
-              document.getElementById("h-" + slugify(decodeURIComponent(h.slice(1))))?.scrollIntoView({ behavior: "smooth", block: "start" });
+              // A heading in this doc, or failing that a section of the page (#founders, #docs).
+              const id = slugify(decodeURIComponent(h.slice(1)));
+              (document.getElementById("h-" + id) || document.getElementById(id))?.scrollIntoView({ behavior: "smooth", block: "start" });
             }}
           >
             {children}
@@ -63,7 +76,7 @@ export default function Md({ text, docs, onOpen }: { text: string; docs: Doc[]; 
         );
       }
       // A link to another file: open the doc made from it, when there is one.
-      const target = /\.md([?#]|$)/i.test(h) ? docs.find((d) => (d.sourcePath && base(d.sourcePath) === base(h)) || d.slug === base(h).replace(/\.md$/, "")) : undefined;
+      const target = /\.(md|csv)([?#]|$)/i.test(h) ? docs.find((d) => (d.sourcePath && base(d.sourcePath) === base(h)) || d.slug === base(h).replace(/\.md$/, "")) : undefined;
       if (target)
         return (
           <a
@@ -75,6 +88,15 @@ export default function Md({ text, docs, onOpen }: { text: string; docs: Doc[]; 
             }}
           >
             {children}
+          </a>
+        );
+      // Any other relative link resolves against the doc's own file on GitHub, when it has one, and stays in the studio's repo.
+      const resolved = repoLink(h, sourceUrl);
+      if (resolved)
+        return (
+          <a href={resolved} target="_blank" rel="noopener noreferrer" className="link">
+            {children}
+            <ArrowUpRight size={12} className="ml-0.5 inline align-[-1px] text-faint" aria-hidden="true" />
           </a>
         );
       return <span>{children}</span>;

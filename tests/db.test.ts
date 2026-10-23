@@ -26,5 +26,17 @@ test("database: migrations apply, and Docs and Hours row-level security holds", 
   assert.ok(m, "the RLS script did not report a result: " + result);
   assert.equal(m![1], m![2], result);
   assert.ok(Number(m![2]) >= 40, "expected the full set of checks to run: " + result);
+
+  // Migration 20261023000700: where a doc lives (source_url, source_commit, synced_at) and the ledger's csv_key.
+  result = "";
+  try {
+    await db.exec(read("tests/rls-sources.sql"));
+  } catch (e) {
+    result = (e as Error).message;
+  }
+  const s = /RLS RESULT: (\d+)\/(\d+) passed/.exec(result);
+  assert.ok(s, "the source/ledger-key script did not report a result: " + result);
+  assert.equal(s![1], s![2], result);
+  assert.ok(Number(s![2]) >= 20, "expected the full set of source checks to run: " + result);
   await db.close();
 });

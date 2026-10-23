@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   normStep, normDecision, normName, normProduct, normMeta, normStatus, parseCost, costSummary, currentPhase,
   upNext, isSettled, rankNames, dueInfo, roleOf, moneyRange, phaseStats, splitPlatforms, safeUrl, type Step,
-  normDoc, searchDocs, plainText, normHours, hoursStats, weekStartOf, addDays, weekLabel, fmtHours, normLedger, moneyIn, dollars, type Doc,
+  normDoc, searchDocs, plainText, sourceLink, sourceParts, siblingDocs, normHours, hoursStats, weekStartOf, addDays, weekLabel, fmtHours, normLedger, moneyIn, dollars, type Doc,
 } from "../src/lib/model.ts";
 
 const step = (id: string, f: Record<string, unknown>) => normStep(id, { title: id, phase: 1, order: 10, owner: "both", status: "todo", ...f }) as Step;
@@ -197,4 +197,37 @@ test("money: totals by paid_by, the $500 gift threshold, and what is repaid", ()
   assert.equal(dollars(11.25), "$11.25");
   assert.equal(dollars(500), "$500");
   assert.equal(dollars(1234.5), "$1,234.50");
+});
+
+test("docs: the source link is kept only for the studio's own GitHub repos, with its commit and sync time", () => {
+  const url = "https://github.com/Far-Shore-Works/studio/blob/main/ledger/expenses.csv";
+  const d = normDoc("a", { title: "Studio expenses", slug: "studio-expenses", folder: "Money", sourcePath: "studio/ledger/expenses.csv", sourceUrl: url, sourceCommit: "8a4c173", syncedAt: "2026-10-23T15:00:00Z" })!;
+  assert.equal(d.sourceUrl, url);
+  assert.equal(d.sourceCommit, "8a4c173");
+  assert.equal(d.syncedAt, "2026-10-23T15:00:00Z");
+  // Anything else is dropped, so a doc can never put a foreign or script link on the page.
+  for (const bad of ["https://evil.example.com/Far-Shore-Works/studio/blob/main/x.md", "https://github.com/someone/studio/blob/main/x.md", "javascript:alert(1)", "https://github.com/Far-Shore-Works/studio/tree/main/x", "https://github.com/Far-Shore-Works/studio/blob/main/a b.md"]) {
+    assert.equal(sourceLink(bad), "", bad);
+  }
+  const old = normDoc("b", { title: "Old", slug: "old", folder: "Plan", sourceCommit: "not-a-hash" })!;
+  assert.deepEqual([old.sourceUrl, old.sourceCommit, old.syncedAt], ["", "", ""]);
+});
+
+test("docs: the source link reads as repo and path", () => {
+  assert.deepEqual(sourceParts("https://github.com/Far-Shore-Works/studio/blob/main/ledger/expenses.csv"), { repo: "Far-Shore-Works/studio", path: "ledger/expenses.csv" });
+  assert.deepEqual(sourceParts("https://github.com/Far-Shore-Works/studio/blob/main/FOUNDER-TERMS.md"), { repo: "Far-Shore-Works/studio", path: "FOUNDER-TERMS.md" });
+  assert.equal(sourceParts("https://example.com/x"), null);
+});
+
+test("docs: files from the same repo folder point at each other; top-level files don't", () => {
+  const mk = (slug: string, sourcePath: string) => normDoc(slug, { title: slug, slug, folder: "Money", sourcePath }) as Doc;
+  const readme = mk("ledger-readme", "studio/ledger/README.md");
+  const csv = mk("studio-expenses", "studio/ledger/expenses.csv");
+  const terms = mk("founder-terms", "studio/FOUNDER-TERMS.md");
+  const hb = mk("handbook", "studio/HANDBOOK.md");
+  const all = [readme, csv, terms, hb];
+  assert.deepEqual(siblingDocs(readme, all).map((d) => d.slug), ["studio-expenses"]);
+  assert.deepEqual(siblingDocs(csv, all).map((d) => d.slug), ["ledger-readme"]);
+  assert.deepEqual(siblingDocs(terms, all), []);
+  assert.deepEqual(siblingDocs(mk("x", ""), all), []);
 });

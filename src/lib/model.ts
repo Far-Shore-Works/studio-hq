@@ -396,7 +396,36 @@ export interface Doc {
   /** members.id of the founder who owns it. A private doc is only ever returned to its owner. */
   owner: string;
   sourcePath: string;
+  /** The file on GitHub (a Far-Shore-Works repo only); "" for a doc that isn't from a repo. */
+  sourceUrl: string;
+  /** Short hash of the last commit that changed the source file. */
+  sourceCommit: string;
+  /** When the doc's content last changed (a sync that finds nothing new leaves this alone). */
   updatedAt: string;
+  /** When a sync last checked the doc against its source. */
+  syncedAt: string;
+}
+/** Only a file in one of the studio's own GitHub repos is ever linked as a doc's source. */
+export function sourceLink(u: string): string {
+  return /^https:\/\/github\.com\/Far-Shore-Works\/[A-Za-z0-9._-]+\/blob\/[^\s]+$/.test(u) ? u : "";
+}
+/** "Far-Shore-Works/studio" and "ledger/expenses.csv" from a source link. */
+export function sourceParts(u: string): { repo: string; path: string } | null {
+  const m = /^https:\/\/github\.com\/(Far-Shore-Works\/[A-Za-z0-9._-]+)\/blob\/[^/\s]+\/([^\s?#]+)/.exec(u);
+  if (!m) return null;
+  try {
+    return { repo: m[1], path: decodeURIComponent(m[2]) };
+  } catch {
+    return { repo: m[1], path: m[2] };
+  }
+}
+/** Docs made from other files in the same repo folder (ledger/README.md and ledger/expenses.csv), for "also in this folder".
+ *  Top-level files don't count: that would list every doc. */
+export function siblingDocs(doc: Doc, docs: Doc[]): Doc[] {
+  const dir = (p: string) => (p.includes("/") ? p.slice(0, p.lastIndexOf("/")) : "");
+  const mine = dir(doc.sourcePath);
+  if (mine.split("/").length < 2) return [];
+  return docs.filter((d) => d.id !== doc.id && dir(d.sourcePath) === mine).sort((a, b) => a.title.localeCompare(b.title));
 }
 export function normDoc(id: string, d: Raw): Doc | null {
   if (!d || typeof d !== "object") return null;
@@ -413,7 +442,10 @@ export function normDoc(id: string, d: Raw): Doc | null {
     visibility: d.visibility === "shared" ? "shared" : "private",
     owner: str(d.owner),
     sourcePath: str(d.sourcePath).trim(),
+    sourceUrl: sourceLink(str(d.sourceUrl).trim()),
+    sourceCommit: /^[0-9a-f]{7,40}$/.test(str(d.sourceCommit).trim()) ? str(d.sourceCommit).trim() : "",
     updatedAt: str(d.updatedAt),
+    syncedAt: str(d.syncedAt),
   };
 }
 

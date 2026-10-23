@@ -1,7 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, FileText, FolderOpen, Lock, Search, Users, X } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, FileText, FolderOpen, GitCommitHorizontal, Lock, Search, Users, X } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { ago, DOC_FOLDERS, searchDocs, type Doc, type DocFolder } from "@/lib/model";
+import { ago, DOC_FOLDERS, searchDocs, siblingDocs, sourceParts, type Doc, type DocFolder } from "@/lib/model";
 import { useNow } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
 import { Empty, Section, Seg, Skel } from "./bits";
@@ -172,7 +172,11 @@ function DocRow({ doc, snippet, showFolder, now, isMine, onOpen }: { doc: Doc; s
             {showFolder && <span className="chip">{doc.folder}</span>}
             <Visibility doc={doc} isMine={isMine} />
           </span>
-          {snippet && <span className="mt-0.5 block text-[13.5px] leading-snug text-muted">{snippet}</span>}
+          {snippet ? (
+            <span className="mt-0.5 block text-[13.5px] leading-snug text-muted">{snippet}</span>
+          ) : (
+            doc.sourcePath && <span className="num mt-0.5 block truncate text-[12.5px] text-faintText">{doc.sourcePath}</span>
+          )}
         </span>
         {doc.updatedAt && (
           <time dateTime={doc.updatedAt} className="shrink-0 whitespace-nowrap pt-1 text-[12.5px] text-faintText" title={new Date(doc.updatedAt).toLocaleString()}>
@@ -197,11 +201,59 @@ function Reader({ doc, docs, owner, isMine, now, onBack, onOpen }: { doc: Doc; d
         <span className="chip">{doc.folder}</span>
         <Visibility doc={doc} isMine={isMine} owner={owner} />
         {doc.updatedAt && <span className="text-[13px] text-faintText">Updated {ago(doc.updatedAt, now)}</span>}
-        {doc.sourcePath && <span className="num truncate text-[12.5px] text-faintText" title={doc.sourcePath}>{doc.sourcePath.split("/").slice(-2).join("/")}</span>}
       </header>
+      <Source doc={doc} docs={docs} now={now} onOpen={onOpen} />
       <Suspense fallback={<div className={cn("space-y-2")}><Skel className="h-5 w-2/3" /><Skel className="h-5" /><Skel className="h-5 w-4/5" /></div>}>
-        <Md text={body} docs={docs} onOpen={onOpen} />
+        <Md text={body} docs={docs} onOpen={onOpen} sourceUrl={doc.sourceUrl} />
       </Suspense>
     </article>
+  );
+}
+
+/** Where the doc lives: the repo file (linked), when it was last checked against it, and the commit it matches. */
+function Source({ doc, docs, now, onOpen }: { doc: Doc; docs: Doc[]; now: number; onOpen: (slug: string) => void }) {
+  const parts = sourceParts(doc.sourceUrl);
+  const siblings = useMemo(() => siblingDocs(doc, docs), [doc, docs]);
+  if (!doc.sourcePath && !doc.sourceUrl) return null;
+  return (
+    <aside aria-label="Where this doc lives" className="mb-5 rounded-xl bg-surface2/70 px-3.5 py-3 text-[13.5px] ring-1 ring-line/60">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <span className="font-semibold text-ink2">Source</span>
+        {doc.sourceUrl ? (
+          <a href={doc.sourceUrl} target="_blank" rel="noopener noreferrer" className="link num min-w-0 break-all" title="Open this file on GitHub">
+            {parts ? `${parts.repo} · ${parts.path}` : doc.sourcePath}
+            <ArrowUpRight size={12} className="ml-0.5 inline align-[-1px] text-faint" aria-hidden="true" />
+          </a>
+        ) : (
+          <span className="num min-w-0 break-all text-ink2" title="Not a file in a studio repository">{doc.sourcePath}</span>
+        )}
+      </div>
+      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] text-faintText">
+        {doc.syncedAt ? (
+          <time dateTime={doc.syncedAt} title={new Date(doc.syncedAt).toLocaleString()}>
+            Synced {ago(doc.syncedAt, now)}
+          </time>
+        ) : (
+          <span>Not synced since sources were tracked</span>
+        )}
+        {doc.sourceCommit && (
+          <span className="inline-flex items-center gap-1" title="The last commit that changed this file">
+            <GitCommitHorizontal size={13} aria-hidden="true" /> <span className="num">{doc.sourceCommit}</span>
+          </span>
+        )}
+        {doc.updatedAt && <span>Text last changed {ago(doc.updatedAt, now)}</span>}
+        {doc.sourceUrl && <span>Rebuilt from the repo automatically; edit the file there, not here.</span>}
+      </div>
+      {siblings.length > 0 && (
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] text-faintText">
+          <span>Also in {doc.sourcePath.slice(0, doc.sourcePath.lastIndexOf("/") + 1)}</span>
+          {siblings.map((d) => (
+            <button key={d.id} type="button" onClick={() => onOpen(d.slug)} className="link">
+              {d.title}
+            </button>
+          ))}
+        </div>
+      )}
+    </aside>
   );
 }

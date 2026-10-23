@@ -47,8 +47,8 @@ For **code changes**, clone this repo and open a pull request; GitHub Actions ch
 | `names` | a name idea | `name`, `note`, `sort_order`, `votes` (`{member_id: true}`) |
 | `products` | a product | `sort_order`, `name`, `status`, `platforms`, `summary`, `next`, `in_company`, `repo` |
 | `meta` | page text | `id` = `studio` (`data`: name, subtitle, links) or `status` (`data`: summary, asOf) |
-| `ledger` | a purchase | mirrors `ledger/expenses.csv` in the studio repo (the CSV stays the record); the Founders panel totals it by `paid_by` |
-| `docs` | a markdown document in the Docs tab | `folder` (Plan, Money, Decisions, Game, Admin), `title`, `slug` (unique), `body_md`, `visibility` (`shared` or `private`), `owner` (a `members.id`), `source_path`. Founders read only; agents write (see below) |
+| `ledger` | a purchase | mirrors `ledger/expenses.csv` in the studio repo (the CSV stays the record); the Founders panel totals it by `paid_by`. `csv_key` is the stable key the mirror upserts by (agents only; null for a line typed in the page) |
+| `docs` | a markdown document in the Docs tab | `folder` (Plan, Money, Decisions, Game, Admin), `title`, `slug` (unique), `body_md`, `visibility` (`shared` or `private`), `owner` (a `members.id`), `source_path`, `source_url` (the file on GitHub), `source_commit` (last commit that changed it), `synced_at` (last checked against the source). Founders read only; agents write (see below) |
 | `hours` | one founder's hours for one week | `member_id`, `week_start` (a Monday), `hours`, `note`. Both founders read all rows; each writes only their own in the app |
 | `members` | a founder | `role` (chris / aaron), `name`, `email`, `alt_emails` (other addresses that may sign in), `user_id` (the account that last signed in) |
 | `team` (view) | old `team/chris`, `team/aaron` | `id` = role, `member_id` |
@@ -73,6 +73,26 @@ from the shared studio repo (or the founder said to share it). **Limit of this p
 owner-level database access (the Supabase dashboard, or an agent connected through the Supabase MCP as an
 organization member) bypasses row-level security and can read every doc, private ones included. Keep that in
 mind before putting something private here.
+
+### Where a doc comes from, and keeping it current
+
+Every doc made from a file in the studio repo (`Far-Shore-Works/studio`) shows a **Source** box in the Docs tab: the repo
+path (linked to the file on GitHub), the commit it matches, and when it was last checked. A doc whose file is
+uncommitted or not pushed yet is skipped rather than synced, so the link always matches what GitHub shows. The
+`ledger/expenses.csv` file appears as the "Studio expenses" doc: a table of every purchase, totals per founder and
+Chris's progress toward the gift in the founder terms (item 7). `.csv` files are converted to a markdown table by
+`docs-sync`.
+
+The repo is the source of truth, so don't edit these docs or the ledger mirror by hand. Keep them current with:
+
+```sh
+bin/studio-hq ledger-sync   # expenses.csv -> the ledger table: upsert by csv_key, never deletes, reports orphans
+bin/studio-sync             # pull the studio repo, sync the shared docs and the ledger; quiet when nothing changed
+```
+
+`bin/studio-sync` runs hourly from a scheduled job on Chris's Mac and any time a studio doc or the ledger changes. Ledger lines on
+the page that the CSV doesn't list are reported as orphans (a line typed in the page, or one removed from the CSV), never
+deleted: add them to the CSV, or ask the founder who entered them.
 
 ## The rule: label every write with `actor`
 
