@@ -1,0 +1,1185 @@
+{
+ "2026-10-27": {
+  "attempt": 0,
+  "objects": [
+   "pillow",
+   "tennis",
+   "block"
+  ],
+  "best": 83,
+  "single": 39,
+  "rnd": 17,
+  "recipe": "stairs",
+  "twist": "lowgravity"
+ },
+ "2026-10-28": {
+  "attempt": 0,
+  "objects": [
+   "block",
+   "soccer",
+   "fridge"
+  ],
+  "best": 86,
+  "single": 65,
+  "rnd": 44,
+  "recipe": "mushroom",
+  "twist": "none"
+ },
+ "2026-10-29": {
+  "attempt": 0,
+  "objects": [
+   "golf",
+   "pingpong",
+   "basketball"
+  ],
+  "best": 74,
+  "single": 48,
+  "rnd": 28,
+  "recipe": "wall",
+  "twist": "none"
+ },
+ "2026-10-30": {
+  "attempt": 0,
+  "objects": [
+   "block",
+   "soccer",
+   "paperball"
+  ],
+  "best": 78,
+  "single": 48,
+  "rnd": 27,
+  "recipe": "wall",
+  "twist": "none"
+ },
+ "2026-10-31": {
+  "attempt": 0,
+  "objects": [
+   "pillow",
+   "golf",
+   "block"
+  ],
+  "best": 83,
+  "single": 42,
+  "rnd": 47,
+  "recipe": "stairs",
+  "twist": "wind"
+ },
+ "2026-11-01": {
+  "attempt": 1,
+  "objects": [
+   "fridge",
+   "volleyball",
+   "soccer",
+   "block"
+  ],
+  "best": 89,
+  "single": 55,
+  "rnd": 28,
+  "recipe": "wall+bridge",
+  "twist": "heavykey"
+ },
+ "2026-11-02": {
+  "attempt": 0,
+  "objects": [
+   "piano",
+   "tire",
+   "soccer"
+  ],
+  "best": 77,
+  "single": 33,
+  "rnd": 36,
+  "recipe": "skyscraper",
+  "twist": "none"
+ },
+ "2026-11-03": {
+  "attempt": 0,
+  "objects": [
+   "tennis",
+   "basketball",
+   "piano"
+  ],
+  "best": 81,
+  "single": 65,
+  "rnd": 32,
+  "recipe": "mushroom",
+  "twist": "none"
+ },
+ "2026-11-04": {
+  "attempt": 0,
+  "objects": [
+   "soccer",
+   "block",
+   "fridge"
+  ],
+  "best": 86,
+  "single": 48,
+  "rnd": 31,
+  "recipe": "wall",
+  "twist": "none"
+ },
+ "2026-11-05": {
+  "attempt": 0,
+  "objects": [
+   "pingpong",
+   "block",
+   "basketball"
+  ],
+  "best": 76,
+  "single": 32,
+  "rnd": 21,
+  "recipe": "skyscraper",
+  "twist": "none"
+ },
+ "2026-11-06": {
+  "attempt": 0,
+  "objects": [
+   "bowling",
+   "fridge",
+   "tennis"
+  ],
+  "best": 82,
+  "single": 48,
+  "rnd": 23,
+  "recipe": "wall",
+  "twist": "wind"
+ },
+ "2026-11-07": {
+  "attempt": 0,
+  "objects": [
+   "anvil",
+   "golf",
+   "soccer"
+  ],
+  "best": 77,
+  "single": 33,
+  "rnd": 32,
+  "recipe": "skyscraper",
+  "twist": "none"
+ },
+ "2026-11-08": {
+  "attempt": 0,
+  "objects": [
+   "volleyball",
+   "tire",
+   "bowling",
+   "tennis"
+  ],
+  "best": 69,
+  "single": 28,
+  "rnd": 21,
+  "recipe": "stairs+pyramid",
+  "twist": "none"
+ },
+ "2026-11-09": {
+  "attempt": 0,
+  "objects": [
+   "volleyball",
+   "anvil",
+   "tire"
+  ],
+  "best": 81,
+  "single": 49,
+  "rnd": 32,
+  "recipe": "mushroom",
+  "twist": "none"
+ },
+ "2026-11-10": {
+  "attempt": 0,
+  "objects": [
+   "soccer",
+   "golf",
+   "pingpong"
+  ],
+  "best": 62,
+  "single": 33,
+  "rnd": 24,
+  "recipe": "skyscraper",
+  "twist": "none"
+ },
+ "2026-11-11": {
+  "attempt": 2,
+  "objects": [
+   "pingpong",
+   "bowling",
+   "anvil"
+  ],
+  "best": 81,
+  "single": 65,
+  "rnd": 38,
+  "recipe": "mushroom",
+  "twist": "none"
+ },
+ "2026-11-12": {
+  "attempt": 1,
+  "objects": [
+   "golf",
+   "soccer",
+   "tennis"
+  ],
+  "best": 75,
+  "single": 47,
+  "rnd": 20,
+  "recipe": "pyramid",
+  "twist": "none"
+ },
+ "2026-11-13": {
+  "attempt": 0,
+  "objects": [
+   "basketball",
+   "tire",
+   "tennis"
+  ],
+  "best": 83,
+  "single": 48,
+  "rnd": 23,
+  "recipe": "wall",
+  "twist": "none"
+ },
+ "2026-11-14": {
+  "attempt": 1,
+  "objects": [
+   "anvil",
+   "soccer",
+   "pingpong"
+  ],
+  "best": 84,
+  "single": 63,
+  "rnd": 59,
+  "recipe": "skyscraper",
+  "twist": "heavykey"
+ },
+ "2026-11-15": {
+  "attempt": 0,
+  "objects": [
+   "fridge",
+   "piano",
+   "bowling",
+   "block"
+  ],
+  "best": 75,
+  "single": 31,
+  "rnd": 14,
+  "recipe": "pyramid+wall",
+  "twist": "none"
+ },
+ "2026-11-16": {
+  "attempt": 0,
+  "objects": [
+   "piano",
+   "pillow",
+   "anvil"
+  ],
+  "best": 83,
+  "single": 48,
+  "rnd": 23,
+  "recipe": "wall",
+  "twist": "lowgravity"
+ },
+ "2026-11-17": {
+  "attempt": 0,
+  "objects": [
+   "fridge",
+   "bowling",
+   "soccer"
+  ],
+  "best": 80,
+  "single": 47,
+  "rnd": 25,
+  "recipe": "pyramid",
+  "twist": "none"
+ },
+ "2026-11-18": {
+  "attempt": 0,
+  "objects": [
+   "paperball",
+   "block",
+   "anvil"
+  ],
+  "best": 62,
+  "single": 32,
+  "rnd": 32,
+  "recipe": "skyscraper",
+  "twist": "none"
+ },
+ "2026-11-19": {
+  "attempt": 0,
+  "objects": [
+   "anvil",
+   "basketball",
+   "pingpong"
+  ],
+  "best": 82,
+  "single": 67,
+  "rnd": 17,
+  "recipe": "gate",
+  "twist": "none"
+ },
+ "2026-11-20": {
+  "attempt": 0,
+  "objects": [
+   "bowling",
+   "fridge",
+   "basketball"
+  ],
+  "best": 85,
+  "single": 54,
+  "rnd": 44,
+  "recipe": "mushroom",
+  "twist": "none"
+ },
+ "2026-11-21": {
+  "attempt": 0,
+  "objects": [
+   "basketball",
+   "tennis",
+   "block"
+  ],
+  "best": 83,
+  "single": 48,
+  "rnd": 28,
+  "recipe": "wall",
+  "twist": "none"
+ },
+ "2026-11-22": {
+  "attempt": 2,
+  "objects": [
+   "bowling",
+   "soccer",
+   "tennis",
+   "pingpong"
+  ],
+  "best": 80,
+  "single": 69,
+  "rnd": 51,
+  "recipe": "gate+stairs",
+  "twist": "heavykey"
+ },
+ "2026-11-23": {
+  "attempt": 0,
+  "objects": [
+   "tennis",
+   "piano",
+   "paperball"
+  ],
+  "best": 89,
+  "single": 64,
+  "rnd": 28,
+  "recipe": "skyscraper",
+  "twist": "heavykey"
+ },
+ "2026-11-24": {
+  "attempt": 1,
+  "objects": [
+   "piano",
+   "block",
+   "pillow"
+  ],
+  "best": 78,
+  "single": 48,
+  "rnd": 23,
+  "recipe": "wall",
+  "twist": "wind"
+ },
+ "2026-11-25": {
+  "attempt": 0,
+  "objects": [
+   "fridge",
+   "piano",
+   "tennis"
+  ],
+  "best": 82,
+  "single": 48,
+  "rnd": 23,
+  "recipe": "wall",
+  "twist": "heavykey"
+ },
+ "2026-11-26": {
+  "attempt": 0,
+  "objects": [
+   "fridge",
+   "bowling",
+   "tennis"
+  ],
+  "best": 80,
+  "single": 47,
+  "rnd": 25,
+  "recipe": "pyramid",
+  "twist": "none"
+ },
+ "2026-11-27": {
+  "attempt": 0,
+  "objects": [
+   "golf",
+   "basketball",
+   "pingpong"
+  ],
+  "best": 63,
+  "single": 33,
+  "rnd": 27,
+  "recipe": "skyscraper",
+  "twist": "none"
+ },
+ "2026-11-28": {
+  "attempt": 0,
+  "objects": [
+   "piano",
+   "tire",
+   "paperball"
+  ],
+  "best": 75,
+  "single": 47,
+  "rnd": 24,
+  "recipe": "pyramid",
+  "twist": "none"
+ },
+ "2026-11-29": {
+  "attempt": 0,
+  "objects": [
+   "block",
+   "paperball",
+   "basketball",
+   "anvil"
+  ],
+  "best": 87,
+  "single": 48,
+  "rnd": 21,
+  "recipe": "mushroom+bridge",
+  "twist": "none"
+ },
+ "2026-11-30": {
+  "attempt": 0,
+  "objects": [
+   "tennis",
+   "anvil",
+   "bowling"
+  ],
+  "best": 77,
+  "single": 33,
+  "rnd": 31,
+  "recipe": "skyscraper",
+  "twist": "none"
+ },
+ "2026-12-01": {
+  "attempt": 0,
+  "objects": [
+   "pingpong",
+   "tennis",
+   "tire"
+  ],
+  "best": 83,
+  "single": 50,
+  "rnd": 42,
+  "recipe": "stairs",
+  "twist": "none"
+ },
+ "2026-12-02": {
+  "attempt": 2,
+  "objects": [
+   "anvil",
+   "tire",
+   "soccer"
+  ],
+  "best": 83,
+  "single": 50,
+  "rnd": 50,
+  "recipe": "stairs",
+  "twist": "none"
+ },
+ "2026-12-03": {
+  "attempt": 2,
+  "objects": [
+   "tire",
+   "pingpong",
+   "tennis"
+  ],
+  "best": 78,
+  "single": 42,
+  "rnd": 23,
+  "recipe": "stairs",
+  "twist": "none"
+ },
+ "2026-12-04": {
+  "attempt": 0,
+  "objects": [
+   "volleyball",
+   "paperball",
+   "bowling"
+  ],
+  "best": 87,
+  "single": 74,
+  "rnd": 16,
+  "recipe": "wall",
+  "twist": "heavykey"
+ },
+ "2026-12-05": {
+  "attempt": 0,
+  "objects": [
+   "golf",
+   "soccer",
+   "piano"
+  ],
+  "best": 82,
+  "single": 48,
+  "rnd": 31,
+  "recipe": "wall",
+  "twist": "lowgravity"
+ },
+ "2026-12-06": {
+  "attempt": 1,
+  "objects": [
+   "golf",
+   "fridge",
+   "piano",
+   "block"
+  ],
+  "best": 86,
+  "single": 56,
+  "rnd": 56,
+  "recipe": "pyramid+bridge",
+  "twist": "none"
+ },
+ "2026-12-07": {
+  "attempt": 1,
+  "objects": [
+   "tire",
+   "basketball",
+   "pingpong"
+  ],
+  "best": 78,
+  "single": 48,
+  "rnd": 33,
+  "recipe": "wall",
+  "twist": "none"
+ },
+ "2026-12-08": {
+  "attempt": 1,
+  "objects": [
+   "soccer",
+   "volleyball",
+   "tire"
+  ],
+  "best": 81,
+  "single": 33,
+  "rnd": 32,
+  "recipe": "skyscraper",
+  "twist": "none"
+ },
+ "2026-12-09": {
+  "attempt": 0,
+  "objects": [
+   "piano",
+   "tennis",
+   "tire"
+  ],
+  "best": 81,
+  "single": 49,
+  "rnd": 44,
+  "recipe": "mushroom",
+  "twist": "none"
+ },
+ "2026-12-10": {
+  "attempt": 0,
+  "objects": [
+   "soccer",
+   "pillow",
+   "piano"
+  ],
+  "best": 78,
+  "single": 50,
+  "rnd": 52,
+  "recipe": "stairs",
+  "twist": "lowgravity"
+ },
+ "2026-12-11": {
+  "attempt": 0,
+  "objects": [
+   "piano",
+   "soccer",
+   "basketball"
+  ],
+  "best": 90,
+  "single": 73,
+  "rnd": 38,
+  "recipe": "skyscraper",
+  "twist": "heavykey"
+ },
+ "2026-12-12": {
+  "attempt": 1,
+  "objects": [
+   "basketball",
+   "pingpong",
+   "tire"
+  ],
+  "best": 77,
+  "single": 52,
+  "rnd": 22,
+  "recipe": "gate",
+  "twist": "lowgravity"
+ },
+ "2026-12-13": {
+  "attempt": 1,
+  "objects": [
+   "soccer",
+   "anvil",
+   "tennis",
+   "pingpong"
+  ],
+  "best": 73,
+  "single": 41,
+  "rnd": 12,
+  "recipe": "stairs+stairs",
+  "twist": "heavykey"
+ },
+ "2026-12-14": {
+  "attempt": 0,
+  "objects": [
+   "pingpong",
+   "bowling",
+   "piano"
+  ],
+  "best": 91,
+  "single": 61,
+  "rnd": 20,
+  "recipe": "wall",
+  "twist": "heavykey"
+ },
+ "2026-12-15": {
+  "attempt": 0,
+  "objects": [
+   "tennis",
+   "bowling",
+   "fridge"
+  ],
+  "best": 85,
+  "single": 54,
+  "rnd": 38,
+  "recipe": "mushroom",
+  "twist": "none"
+ },
+ "2026-12-16": {
+  "attempt": 1,
+  "objects": [
+   "volleyball",
+   "paperball",
+   "tire"
+  ],
+  "best": 91,
+  "single": 74,
+  "rnd": 22,
+  "recipe": "wall",
+  "twist": "heavykey"
+ },
+ "2026-12-17": {
+  "attempt": 0,
+  "objects": [
+   "fridge",
+   "tennis",
+   "block"
+  ],
+  "best": 78,
+  "single": 50,
+  "rnd": 19,
+  "recipe": "stairs",
+  "twist": "none"
+ },
+ "2026-12-18": {
+  "attempt": 0,
+  "objects": [
+   "tennis",
+   "block",
+   "fridge"
+  ],
+  "best": 78,
+  "single": 50,
+  "rnd": 52,
+  "recipe": "stairs",
+  "twist": "none"
+ },
+ "2026-12-19": {
+  "attempt": 0,
+  "objects": [
+   "basketball",
+   "volleyball",
+   "bowling"
+  ],
+  "best": 80,
+  "single": 47,
+  "rnd": 22,
+  "recipe": "pyramid",
+  "twist": "none"
+ },
+ "2026-12-20": {
+  "attempt": 0,
+  "objects": [
+   "bowling",
+   "soccer",
+   "paperball",
+   "volleyball"
+  ],
+  "best": 71,
+  "single": 34,
+  "rnd": 36,
+  "recipe": "pyramid+stairs",
+  "twist": "heavykey"
+ },
+ "2026-12-21": {
+  "attempt": 0,
+  "objects": [
+   "anvil",
+   "fridge",
+   "tennis"
+  ],
+  "best": 81,
+  "single": 49,
+  "rnd": 19,
+  "recipe": "mushroom",
+  "twist": "heavykey"
+ },
+ "2026-12-22": {
+  "attempt": 1,
+  "objects": [
+   "soccer",
+   "fridge",
+   "anvil"
+  ],
+  "best": 81,
+  "single": 49,
+  "rnd": 24,
+  "recipe": "mushroom",
+  "twist": "heavykey"
+ },
+ "2026-12-23": {
+  "attempt": 0,
+  "objects": [
+   "tire",
+   "soccer",
+   "fridge"
+  ],
+  "best": 81,
+  "single": 37,
+  "rnd": 34,
+  "recipe": "skyscraper",
+  "twist": "none"
+ },
+ "2026-12-24": {
+  "attempt": 0,
+  "objects": [
+   "basketball",
+   "piano",
+   "pillow"
+  ],
+  "best": 81,
+  "single": 65,
+  "rnd": 38,
+  "recipe": "mushroom",
+  "twist": "lowgravity"
+ },
+ "2026-12-25": {
+  "attempt": 0,
+  "objects": [
+   "block",
+   "volleyball",
+   "pingpong"
+  ],
+  "best": 66,
+  "single": 33,
+  "rnd": 32,
+  "recipe": "skyscraper",
+  "twist": "none"
+ },
+ "2026-12-26": {
+  "attempt": 0,
+  "objects": [
+   "anvil",
+   "tennis",
+   "bowling"
+  ],
+  "best": 91,
+  "single": 61,
+  "rnd": 53,
+  "recipe": "stairs",
+  "twist": "heavykey"
+ },
+ "2026-12-27": {
+  "attempt": 0,
+  "objects": [
+   "soccer",
+   "paperball",
+   "tire",
+   "block"
+  ],
+  "best": 63,
+  "single": 32,
+  "rnd": 19,
+  "recipe": "pyramid+pyramid",
+  "twist": "none"
+ },
+ "2026-12-28": {
+  "attempt": 0,
+  "objects": [
+   "piano",
+   "bowling",
+   "volleyball"
+  ],
+  "best": 81,
+  "single": 37,
+  "rnd": 36,
+  "recipe": "skyscraper",
+  "twist": "lowgravity"
+ },
+ "2026-12-29": {
+  "attempt": 0,
+  "objects": [
+   "bowling",
+   "tire",
+   "fridge"
+  ],
+  "best": 81,
+  "single": 49,
+  "rnd": 44,
+  "recipe": "mushroom",
+  "twist": "none"
+ },
+ "2026-12-30": {
+  "attempt": 0,
+  "objects": [
+   "bowling",
+   "tennis",
+   "soccer"
+  ],
+  "best": 78,
+  "single": 50,
+  "rnd": 23,
+  "recipe": "stairs",
+  "twist": "none"
+ },
+ "2026-12-31": {
+  "attempt": 0,
+  "objects": [
+   "pingpong",
+   "soccer",
+   "bowling"
+  ],
+  "best": 79,
+  "single": 63,
+  "rnd": 55,
+  "recipe": "skyscraper",
+  "twist": "heavykey"
+ },
+ "2027-01-01": {
+  "attempt": 2,
+  "objects": [
+   "anvil",
+   "tennis",
+   "bowling"
+  ],
+  "best": 80,
+  "single": 47,
+  "rnd": 24,
+  "recipe": "pyramid",
+  "twist": "lowgravity"
+ },
+ "2027-01-02": {
+  "attempt": 0,
+  "objects": [
+   "soccer",
+   "fridge",
+   "bowling"
+  ],
+  "best": 78,
+  "single": 50,
+  "rnd": 52,
+  "recipe": "stairs",
+  "twist": "none"
+ },
+ "2027-01-03": {
+  "attempt": 0,
+  "objects": [
+   "soccer",
+   "golf",
+   "basketball",
+   "anvil"
+  ],
+  "best": 89,
+  "single": 50,
+  "rnd": 12,
+  "recipe": "bridge+wall",
+  "twist": "heavykey"
+ },
+ "2027-01-04": {
+  "attempt": 0,
+  "objects": [
+   "soccer",
+   "piano",
+   "paperball"
+  ],
+  "best": 81,
+  "single": 65,
+  "rnd": 32,
+  "recipe": "mushroom",
+  "twist": "lowgravity"
+ },
+ "2027-01-05": {
+  "attempt": 0,
+  "objects": [
+   "tennis",
+   "block",
+   "soccer"
+  ],
+  "best": 83,
+  "single": 50,
+  "rnd": 50,
+  "recipe": "stairs",
+  "twist": "none"
+ },
+ "2027-01-06": {
+  "attempt": 0,
+  "objects": [
+   "anvil",
+   "paperball",
+   "soccer"
+  ],
+  "best": 77,
+  "single": 52,
+  "rnd": 17,
+  "recipe": "gate",
+  "twist": "none"
+ },
+ "2027-01-07": {
+  "attempt": 0,
+  "objects": [
+   "soccer",
+   "basketball",
+   "block"
+  ],
+  "best": 82,
+  "single": 48,
+  "rnd": 23,
+  "recipe": "wall",
+  "twist": "wind"
+ },
+ "2027-01-08": {
+  "attempt": 0,
+  "objects": [
+   "paperball",
+   "bowling",
+   "soccer"
+  ],
+  "best": 81,
+  "single": 65,
+  "rnd": 18,
+  "recipe": "mushroom",
+  "twist": "none"
+ },
+ "2027-01-09": {
+  "attempt": 2,
+  "objects": [
+   "anvil",
+   "tennis",
+   "bowling"
+  ],
+  "best": 80,
+  "single": 47,
+  "rnd": 24,
+  "recipe": "pyramid",
+  "twist": "none"
+ },
+ "2027-01-10": {
+  "attempt": 0,
+  "objects": [
+   "bowling",
+   "fridge",
+   "block",
+   "basketball"
+  ],
+  "best": 83,
+  "single": 69,
+  "rnd": 51,
+  "recipe": "gate+stairs",
+  "twist": "heavykey"
+ },
+ "2027-01-11": {
+  "attempt": 1,
+  "objects": [
+   "soccer",
+   "pingpong",
+   "anvil"
+  ],
+  "best": 77,
+  "single": 52,
+  "rnd": 24,
+  "recipe": "gate",
+  "twist": "lowgravity"
+ },
+ "2027-01-12": {
+  "attempt": 0,
+  "objects": [
+   "fridge",
+   "golf",
+   "soccer"
+  ],
+  "best": 76,
+  "single": 68,
+  "rnd": 36,
+  "recipe": "gate",
+  "twist": "none"
+ },
+ "2027-01-13": {
+  "attempt": 1,
+  "objects": [
+   "pingpong",
+   "tire",
+   "block"
+  ],
+  "best": 78,
+  "single": 50,
+  "rnd": 42,
+  "recipe": "stairs",
+  "twist": "none"
+ },
+ "2027-01-14": {
+  "attempt": 0,
+  "objects": [
+   "bowling",
+   "basketball",
+   "anvil"
+  ],
+  "best": 78,
+  "single": 50,
+  "rnd": 28,
+  "recipe": "stairs",
+  "twist": "none"
+ },
+ "2027-01-15": {
+  "attempt": 0,
+  "objects": [
+   "volleyball",
+   "basketball",
+   "golf"
+  ],
+  "best": 81,
+  "single": 48,
+  "rnd": 38,
+  "recipe": "mushroom",
+  "twist": "none"
+ },
+ "2027-01-16": {
+  "attempt": 0,
+  "objects": [
+   "block",
+   "fridge",
+   "golf"
+  ],
+  "best": 80,
+  "single": 47,
+  "rnd": 22,
+  "recipe": "pyramid",
+  "twist": "none"
+ },
+ "2027-01-17": {
+  "attempt": 0,
+  "objects": [
+   "block",
+   "volleyball",
+   "pingpong",
+   "tennis"
+  ],
+  "best": 64,
+  "single": 28,
+  "rnd": 15,
+  "recipe": "stairs+stairs",
+  "twist": "lowgravity"
+ },
+ "2027-01-18": {
+  "attempt": 1,
+  "objects": [
+   "block",
+   "pillow",
+   "tennis"
+  ],
+  "best": 82,
+  "single": 48,
+  "rnd": 13,
+  "recipe": "wall",
+  "twist": "none"
+ },
+ "2027-01-19": {
+  "attempt": 0,
+  "objects": [
+   "block",
+   "soccer",
+   "pingpong"
+  ],
+  "best": 75,
+  "single": 47,
+  "rnd": 24,
+  "recipe": "pyramid",
+  "twist": "lowgravity"
+ },
+ "2027-01-20": {
+  "attempt": 0,
+  "objects": [
+   "block",
+   "bowling",
+   "paperball"
+  ],
+  "best": 77,
+  "single": 50,
+  "rnd": 36,
+  "recipe": "stairs",
+  "twist": "heavykey"
+ },
+ "2027-01-21": {
+  "attempt": 0,
+  "objects": [
+   "golf",
+   "tennis",
+   "volleyball"
+  ],
+  "best": 78,
+  "single": 47,
+  "rnd": 20,
+  "recipe": "pyramid",
+  "twist": "heavykey"
+ },
+ "2027-01-22": {
+  "attempt": 0,
+  "objects": [
+   "tire",
+   "tennis",
+   "block"
+  ],
+  "best": 86,
+  "single": 47,
+  "rnd": 24,
+  "recipe": "pyramid",
+  "twist": "heavykey"
+ },
+ "2027-01-23": {
+  "attempt": 0,
+  "objects": [
+   "pingpong",
+   "volleyball",
+   "piano"
+  ],
+  "best": 75,
+  "single": 47,
+  "rnd": 22,
+  "recipe": "pyramid",
+  "twist": "wind"
+ },
+ "2027-01-24": {
+  "attempt": 0,
+  "objects": [
+   "anvil",
+   "volleyball",
+   "paperball",
+   "tire"
+  ],
+  "best": 79,
+  "single": 48,
+  "rnd": 25,
+  "recipe": "mushroom+gate",
+  "twist": "lowgravity"
+ }
+}

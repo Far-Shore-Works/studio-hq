@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta name="robots" content="noindex, nofollow">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#BFE6FF">
+<title>Topple</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+</head>
+<body>
+<div id="app">
+  <canvas id="cv"></canvas>
+
+  <header id="top">
+    <div class="logo">Topple</div>
+    <div id="stars" class="stars" aria-label="Throws left"></div>
+    <div class="meta"><span id="dayno" class="chip"></span><span id="streakChip" class="chip hidden"></span><button id="muteBtn" class="chip mute" aria-label="Sound on"></button><button id="menuBtn" class="chip mute" aria-label="Menu"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 7h16M4 12h16M4 17h16" stroke="#2F4B6E" stroke-width="2.6" stroke-linecap="round"/></svg></button></div>
+  </header>
+
+  <div id="leftcol" class="leftcol">
+    <div id="banner" class="banner hidden"></div>
+    <section id="card" class="card">
+      <canvas id="cardIcon" width="112" height="112"></canvas>
+      <div class="cardText">
+        <div id="cardName" class="cardName"></div>
+        <div id="cardStats" class="cardStats"></div>
+        <div id="cardSize" class="cardSize"></div>
+      </div>
+    </section>
+    <div id="tray" class="tray" aria-label="Pick which object to throw next"></div>
+  </div>
+
+  <div id="power" class="power hidden"><span id="powerNum">0</span><small>power</small></div>
+  <div id="hint" class="hint">Pull back, let go</div>
+
+  <section id="sheet" class="sheet hidden" aria-live="polite">
+    <div class="sheetBig" id="sheetBig"></div>
+    <div class="sheetLines" id="sheetLines"></div>
+    <button id="nextBtn" class="btn">Next throw</button>
+  </section>
+
+  <section id="results" class="results hidden">
+    <div class="resCard">
+      <div class="resTitle" id="resTitle">Topple #1</div>
+      <div class="resBig"><span id="resPct">0%</span><small>of the tower down</small></div>
+      <canvas id="resTower" width="360" height="190"></canvas>
+      <ul id="resThrows" class="resThrows"></ul>
+      <div id="resCompare" class="resCompare hidden"></div>
+      <pre id="shareText" class="shareText"></pre>
+      <div class="resButtons">
+        <button id="copyBtn" class="btn">Copy result</button>
+        <button id="pngBtn" class="btn ghost">Save picture</button>
+        <button id="linkBtn" class="btn ghost">Challenge a friend</button>
+        <button id="collBtn" class="btn ghost">My collection</button>
+        <button id="archBtn" class="btn ghost">Past towers</button>
+        <button id="againBtn" class="btn ghost hidden">Try again</button>
+      </div>
+      <div class="resFoot">
+        <div id="resStreak"></div>
+        <div id="resRank" class="soft"></div>
+        <div id="resNext" class="soft"></div>
+      </div>
+    </div>
+  </section>
+
+  <div id="modal" class="modal hidden"><div class="modalCard"><button id="modalClose" class="modalClose" aria-label="Close">&times;</button><div id="modalBody"></div></div></div>
+
+  <div id="dev" class="dev hidden">
+    <button id="devToggle">dev</button>
+    <div class="devBody">
+      <button id="devReset">Reset today</button>
+      <button id="devResetAll">Reset all</button>
+      <input id="devDate" type="date">
+      <span id="devInfo"></span>
+    </div>
+  </div>
+</div>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
