@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Empty, Menu, Section, Skel } from "./bits";
 
 /** Status as a tone: live is green, in development is the studio navy, the rest are quiet. */
-function tone(status: string) {
+export function tone(status: string) {
   const s = status.toLowerCase();
   if (/live|launched|shipped/.test(s)) return "chip-ok";
   if (/develop|build|progress|beta/.test(s)) return "chip-accent";

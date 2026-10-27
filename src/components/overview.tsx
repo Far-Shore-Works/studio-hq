@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, ChevronDown, CircleDollarSign, FileSignature, Flag, ListChecks, Scale } from "lucide-react";
+import { Boxes, CalendarClock, Check, ChevronDown, CircleDollarSign, FileSignature, Flag, ListChecks, Scale } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { costSummary, currentPhase, dueInfo, isSettled, moneyRange, phaseStats, PHASES, signingState, upNext, yourMove, type Role, type SigningItem } from "@/lib/model";
+import { costSummary, currentPhase, dueInfo, isSettled, moneyRange, phaseStats, PHASES, signingState, comingUp, byOrder, upNext, yourMove, type Role, type SigningItem } from "@/lib/model";
 import { cn } from "@/lib/utils";
 import { Avatar, Count, Skel, StatusGlyph } from "./bits";
 import { useUi } from "./ui";
+import { tone } from "./products";
 
 export function Overview() {
   const { steps, decisions, team, ready, mode, role: viewer } = useStore();
@@ -26,6 +27,10 @@ export function Overview() {
     <div id="overview" className="space-y-3">
       <MoveCard />
       <SigningCard />
+      <div className="grid gap-3 md:grid-cols-2">
+        <ComingUpCard />
+        <GamesCard />
+      </div>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {/* Phase */}
         <button type="button" className="stat tap" onClick={() => scrollTo(cur >= 1 && cur <= 6 ? "phase-" + cur : "gameplan")} aria-label={curName ? `Current phase ${cur}, ${curName}. Go to it.` : "Go to the gameplan"}>
@@ -307,6 +312,81 @@ function MoveCard() {
           {items.length - shown.length} more in the gameplan
         </button>
       )}
+    </section>
+  );
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const shortDay = (iso: string) => `${MONTHS[+iso.slice(5, 7) - 1]} ${+iso.slice(8, 10)}`;
+
+/** Steps that have a due date, in date order, plus the expected state approval until it happens. */
+function ComingUpCard() {
+  const { steps, status, ready, roleName } = useStore();
+  const { focusStep } = useUi();
+  const list = useMemo(() => comingUp(steps, status), [steps, status]);
+  if (!ready.steps) return <Skel className="h-48 rounded-3xl" />;
+  const shown = list.slice(0, 6);
+  const who = (o: string) => (o === "state" ? "State" : o === "both" ? "Both" : o === "chris" || o === "aaron" ? roleName(o) : "");
+  return (
+    <section className="card px-5 pb-3 pt-4 sm:px-6" aria-labelledby="coming-h">
+      <header className="flex items-center gap-2.5">
+        <CalendarClock size={17} strokeWidth={2.1} className="shrink-0 text-accent" aria-hidden="true" />
+        <h2 id="coming-h" className="text-[16px] font-bold tracking-[-0.01em]">
+          Coming up
+        </h2>
+      </header>
+      {shown.length ? (
+        <ul className="rows mt-1">
+          {shown.map((i) => (
+            <li key={i.id}>
+              <button type="button" disabled={!i.stepId} onClick={() => i.stepId && focusStep(i.stepId)} className="group flex min-h-[46px] w-full items-center gap-3 rounded-lg py-1.5 text-left">
+                <span className="num w-[58px] shrink-0 text-[13px] font-semibold text-ink2">
+                  {i.approx ? "~" : ""}
+                  {shortDay(i.date)}
+                </span>
+                <span className="min-w-0 flex-1 text-[14.5px] leading-snug text-ink group-hover:text-accent">{i.title}</span>
+                {who(i.owner) && <span className="chip shrink-0">{who(i.owner)}</span>}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="py-3 text-[14px] text-muted">No dates are set yet. Add a due date to a step and it shows here.</p>
+      )}
+      {list.length > shown.length && <p className="pb-1 pt-1 text-[12.5px] text-faintText">{list.length - shown.length} more dated steps in the gameplan.</p>}
+    </section>
+  );
+}
+
+/** Every product with its status, and one row for Aaron's games, which go in but aren't listed by name. */
+function GamesCard() {
+  const { products, ready } = useStore();
+  const { scrollTo } = useUi();
+  const list = useMemo(() => products.filter((p) => p.id !== "ideas").slice().sort(byOrder), [products]);
+  if (!ready.products) return <Skel className="h-48 rounded-3xl" />;
+  return (
+    <section className="card px-5 pb-3 pt-4 sm:px-6" aria-labelledby="games-h">
+      <header className="flex items-center gap-2.5">
+        <Boxes size={17} strokeWidth={2.1} className="shrink-0 text-accent" aria-hidden="true" />
+        <h2 id="games-h" className="text-[16px] font-bold tracking-[-0.01em]">
+          Games and apps
+        </h2>
+      </header>
+      <ul className="rows mt-1">
+        {list.map((p) => (
+          <li key={p.id}>
+            <button type="button" onClick={() => scrollTo("products")} className="group flex min-h-[46px] w-full items-center gap-3 rounded-lg py-1.5 text-left">
+              <span className="min-w-0 flex-1 text-[14.5px] font-semibold leading-snug text-ink group-hover:text-accent">{p.name}</span>
+              <span className={cn("chip shrink-0", tone(p.status))}>{p.status || "No status"}</span>
+            </button>
+          </li>
+        ))}
+        <li className="flex min-h-[46px] items-center gap-3 py-1.5">
+          <span className="min-w-0 flex-1 text-[14.5px] font-semibold leading-snug text-ink">Aaron's games</span>
+          <span className="chip shrink-0">Not listed yet</span>
+        </li>
+      </ul>
+      <p className="pb-1 pt-1 text-[12.5px] text-faintText">Everything either of you makes goes in (agreed Oct 26).</p>
     </section>
   );
 }

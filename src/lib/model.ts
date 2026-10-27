@@ -741,9 +741,7 @@ export function signingState(steps: Step[], decisions: Decision[], team: Team, s
 
   // 3. The state approves the LLC. Only an explicit signal counts: a date in the status doc (llcApprovedOn) or a
   //    separate step about the state's approval marked done. Finishing the filing step is not approval.
-  const filing = find(/articles of organization/i);
-  const approvalStep = steps.find((s) => s !== filing && /^(the state|state|new mexico|nm)\b.*\bapprov(es|ed|al)\b/i.test(s.title) && !/\b(check|confirm|pending|waiting|air force|daf)\b/i.test(s.title));
-  const approved = !!status?.llcApprovedOn || approvalStep?.status === "done";
+  const { filing, approvalStep, approved } = llcApproval(steps, status);
   if (filing || approvalStep || status?.llcApprovedOn) {
     before.push({
       id: "state",
@@ -810,4 +808,42 @@ export function yourMove(steps: Step[], decisions: Decision[], team: Team, role:
     .sort((a, b) => rank(a) - rank(b) || (a.due && b.due ? a.due.localeCompare(b.due) : a.due ? -1 : b.due ? 1 : 0) || a.phase - b.phase || a.order - b.order)
     .forEach((s) => items.push({ kind: "step", id: s.id, title: s.title, sub: PHASES[s.phase - 1].name, status: s.status, due: s.due, both: s.owner === "both" }));
   return { items, total: items.length };
+}
+
+/** Whether the state has approved the LLC, from an explicit signal only (see signingState). */
+export function llcApproval(steps: Step[], status?: StatusDoc | null): { filing?: Step; approvalStep?: Step; approved: boolean } {
+  const filing = steps.find((s) => /articles of organization/i.test(s.title));
+  const approvalStep = steps.find((s) => s !== filing && /^(the state|state|new mexico|nm)\b.*\bapprov(es|ed|al)\b/i.test(s.title) && !/\b(check|confirm|pending|waiting|air force|daf)\b/i.test(s.title));
+  return { filing, approvalStep, approved: !!status?.llcApprovedOn || approvalStep?.status === "done" };
+}
+
+// ---- Coming up ----------------------------------------------------------------------------------
+export interface Upcoming {
+  id: string;
+  date: string; // YYYY-MM-DD
+  /** The date is an estimate, shown with a "~". */
+  approx?: boolean;
+  title: string;
+  owner: Owner | "state" | "";
+  stepId?: string;
+}
+/** The filing step's note ("Filed Oct 23 ... about 9 days behind") as an estimated approval date. */
+export function filingEtaDate(filing: Step | undefined, now = new Date()): string {
+  if (!filing || filing.status === "todo") return "";
+  const m = filing.note.match(/\bfiled\b[^.]*?\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* (\d{1,2})\b/i);
+  const behind = filing.note.match(/about (\d{1,2}) days behind/i);
+  if (!m || !behind) return "";
+  const mo = MON.findIndex((x) => x.toLowerCase() === m[1].toLowerCase().slice(0, 3));
+  const yr = +(filing.note.match(/\b(20\d{2})\b/)?.[1] || now.getFullYear());
+  return new Date(Date.UTC(yr, mo, +m[2] + +behind[1])).toISOString().slice(0, 10);
+}
+/** Dated, not-done steps in date order, plus the expected state approval while it is still pending. */
+export function comingUp(steps: Step[], status?: StatusDoc | null, now = new Date()): Upcoming[] {
+  const out: Upcoming[] = steps
+    .filter((s) => s.due && s.status !== "done")
+    .map((s) => ({ id: s.id, date: s.due, title: s.title, owner: s.owner, stepId: s.id }));
+  const { filing, approved } = llcApproval(steps, status);
+  const eta = approved ? "" : filingEtaDate(filing, now);
+  if (eta) out.push({ id: "state-approval", date: eta, approx: true, title: "New Mexico approves the LLC (expected)", owner: "state", stepId: filing?.id });
+  return out.sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title));
 }

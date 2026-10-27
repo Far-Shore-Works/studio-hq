@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  fixMojibake, signingState, filingNote, yourMove, normStep, normDecision, normName, normProduct, normMeta, normStatus, parseCost, costSummary, currentPhase,
+  fixMojibake, signingState, filingNote, yourMove, comingUp, filingEtaDate, normStep, normDecision, normName, normProduct, normMeta, normStatus, parseCost, costSummary, currentPhase,
   upNext, isSettled, rankNames, dueInfo, roleOf, moneyRange, phaseStats, splitPlatforms, safeUrl, type Step,
   normDoc, searchDocs, plainText, sourceLink, sourceParts, siblingDocs, normHours, hoursStats, weekStartOf, addDays, weekLabel, fmtHours, normLedger, moneyIn, dollars, type Doc,
 } from "../src/lib/model.ts";
@@ -324,4 +324,20 @@ test("your move: only what waits on the viewer", () => {
   assert.deepEqual(a.items.map((i) => i.id), ["d1", "b1", "a1"].sort((x, y) => (x === "d1" ? -1 : y === "d1" ? 1 : 0)));
   assert.equal(a.items[0].kind, "decision");
   assert.equal(yourMove([], [], team, "aaron").total, 0);
+});
+
+test("coming up: due dates in order, plus the expected state approval until it happens", () => {
+  const steps = [
+    step("a", { title: "Later", due: "2027-03-15" }),
+    step("b", { title: "Done one", due: "2027-01-01", status: "done" }),
+    step("c", { title: "Soon", due: "2027-01-10" }),
+    step("d", { title: "No date" }),
+    step("file", { title: "File the articles of organization", status: "doing", note: "Filed online Oct 23. The state was about 9 days behind (Oct 23)." }),
+  ];
+  const now = new Date("2026-10-27T12:00:00Z");
+  assert.equal(filingEtaDate(steps[4], now), "2026-11-01");
+  const list = comingUp(steps, null, now);
+  assert.deepEqual(list.map((i) => i.date), ["2026-11-01", "2027-01-10", "2027-03-15"]);
+  assert.equal(list[0].approx, true);
+  assert.deepEqual(comingUp(steps, { summary: "x", asOf: "", llcApprovedOn: "2026-11-02" }, now).map((i) => i.date), ["2027-01-10", "2027-03-15"]);
 });
