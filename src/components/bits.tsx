@@ -198,7 +198,8 @@ export function Seg<T extends string>({
         const i = options.findIndex((o) => o.id === value);
         const next = options[(i + step + options.length) % options.length];
         onChange(next.id);
-        requestAnimationFrame(() => (e.currentTarget.querySelector('[aria-checked="true"]') as HTMLElement | null)?.focus());
+        const group = e.currentTarget;
+        requestAnimationFrame(() => (group.querySelector('[aria-checked="true"]') as HTMLElement | null)?.focus());
       }}
     >
       {options.map((o) => (

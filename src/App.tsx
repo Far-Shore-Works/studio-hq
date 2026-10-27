@@ -183,7 +183,7 @@ function Hero() {
           </ul>
         )}
       </div>
-      {status && (
+      {status && status.summary && (
         <div className="mt-5 flex items-start gap-3 rounded-2xl bg-raised/70 px-4 py-3 shadow-[0_0_0_1px_rgb(var(--line))]">
           <span className="relative mt-[7px] flex h-2 w-2 shrink-0" aria-hidden="true">
             <span className="animate-ping2 absolute inset-0 rounded-full bg-sun" />

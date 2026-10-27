@@ -295,3 +295,14 @@ test("signing: finishing the filing step is not state approval", () => {
   assert.equal(filingNote(undefined), "Not filed yet");
   assert.equal(filingNote(step("f", { title: "File", status: "doing", note: "Filed Oct 28. Expect early Nov." })), "Filed Oct 28, approval pending (~early Nov)");
 });
+
+test("signing: odd approval data", () => {
+  assert.equal(normStatus({ summary: "x", llcApprovedOn: "2026-99-99" })!.llcApprovedOn, "");
+  assert.equal(normStatus({ llcApprovedOn: "2026-11-02" })!.llcApprovedOn, "2026-11-02");
+  const team = { chris: "c", aaron: "a" };
+  const steps = [step("sign", { title: "Sign the operating agreement", note: "Still open: x." }), step("chk", { title: "Check LLC approval status", status: "done" }), step("file", { title: "File the articles of organization", status: "doing", note: "Filed Dec 28 2026. About 9 days behind." })];
+  const it = signingState(steps, [], team).before.find((i) => i.id === "state")!;
+  assert.equal(it.done, false);
+  assert.equal(it.note, "Filed Dec 28, approval pending (~early Jan)");
+  assert.equal(filingNote(step("f", { title: "F", status: "doing", note: "Filed Feb 20 2028, about 9 days behind" })), "Filed Feb 20, approval pending (~early Mar)".replace("early Mar", "late Feb"));
+});

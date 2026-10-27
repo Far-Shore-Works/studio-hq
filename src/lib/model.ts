@@ -130,6 +130,11 @@ export function fixMojibake(s: string): string {
 const str = (v: unknown) => (typeof v === "string" ? fixMojibake(v) : typeof v === "number" ? String(v) : "");
 const num = (v: unknown, d: number) => (typeof v === "number" && Number.isFinite(v) ? v : typeof v === "string" && v.trim() && Number.isFinite(+v) ? +v : d);
 const isDay = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s);
+const isRealDay = (s: string) => {
+  if (!isDay(s)) return false;
+  const t = new Date(s + "T00:00:00Z");
+  return !Number.isNaN(t.getTime()) && t.toISOString().slice(0, 10) === s;
+};
 
 export function normStep(id: string, d: Raw): Step | null {
   if (!d || typeof d !== "object") return null;
@@ -228,7 +233,8 @@ export function normStatus(d: Raw): StatusDoc | null {
   if (!d) return null;
   const summary = str(d.summary).trim();
   const ap = str(d.llcApprovedOn);
-  return summary ? { summary, asOf: str(d.asOf), llcApprovedOn: isDay(ap) ? ap : "" } : null;
+  const llcApprovedOn = isRealDay(ap) ? ap : "";
+  return summary || llcApprovedOn ? { summary, asOf: str(d.asOf), llcApprovedOn } : null;
 }
 export function normTeam(d: Raw): Team {
   return { chris: d ? str(d.chris) : "", aaron: d ? str(d.aaron) : "" };
@@ -736,7 +742,7 @@ export function signingState(steps: Step[], decisions: Decision[], team: Team, s
   // 3. The state approves the LLC. Only an explicit signal counts: a date in the status doc (llcApprovedOn) or a
   //    separate step about the state's approval marked done. Finishing the filing step is not approval.
   const filing = find(/articles of organization/i);
-  const approvalStep = steps.find((s) => s !== filing && /(state|new mexico|llc)\b.*\bapprov|\bapproval of the llc/i.test(s.title) && !/air force|outside-activity|daf/i.test(s.title));
+  const approvalStep = steps.find((s) => s !== filing && /^(the state|state|new mexico|nm)\b.*\bapprov(es|ed|al)\b/i.test(s.title) && !/\b(check|confirm|pending|waiting|air force|daf)\b/i.test(s.title));
   const approved = !!status?.llcApprovedOn || approvalStep?.status === "done";
   if (filing || approvalStep || status?.llcApprovedOn) {
     before.push({
@@ -769,12 +775,12 @@ export function filingNote(filing?: Step): string {
   const said = filing.note.match(/\b(early|mid|late)[- ](Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*/i);
   if (said) eta = `${said[1].toLowerCase()} ${said[2]}`;
   else if (m && behind) {
+    // Day arithmetic on a real calendar date (year from the note, else this year), so month ends and leap years hold.
     const mo = MON.findIndex((x) => x.toLowerCase() === m[1].toLowerCase().slice(0, 3));
-    const day = +m[2] + +behind[1];
-    const dim = new Date(2001, mo + 1, 0).getDate();
-    const nm = day > dim ? (mo + 1) % 12 : mo;
-    const d2 = day > dim ? day - dim : day;
-    eta = `${d2 <= 10 ? "early" : d2 <= 20 ? "mid" : "late"} ${MON[nm]}`;
+    const yr = +(filing.note.match(/\b(20\d{2})\b/)?.[1] || new Date().getFullYear());
+    const at = new Date(Date.UTC(yr, mo, +m[2] + +behind[1]));
+    const d2 = at.getUTCDate();
+    eta = `${d2 <= 10 ? "early" : d2 <= 20 ? "mid" : "late"} ${MON[at.getUTCMonth()]}`;
   }
   return `${m ? `Filed ${MON[MON.findIndex((x) => x.toLowerCase() === m[1].toLowerCase().slice(0, 3))]} ${m[2]}` : "Filed"}, approval pending${eta ? ` (~${eta})` : ""}`;
 }
