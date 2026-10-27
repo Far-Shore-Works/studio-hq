@@ -195,7 +195,10 @@ function SigningCard() {
           {i.done && <Check size={14} strokeWidth={3} />}
         </span>
         <span className="min-w-0 flex-1">
-          <span className={cn("block text-[14.5px] leading-snug group-hover:text-accent", i.done ? "text-muted line-through decoration-line2" : "text-ink")}>{i.label}</span>
+          <span className={cn("block text-[14.5px] leading-snug group-hover:text-accent", i.done ? "text-muted line-through decoration-line2" : "text-ink")}>
+            <span className="sr-only">{i.done ? "Done: " : "Still open: "}</span>
+            {i.label}
+          </span>
           {i.note && !i.done && <span className="block text-[12.5px] leading-snug text-muted">{i.note}</span>}
         </span>
         <span className="chip shrink-0">{i.done ? "Done" : who(i.who)}</span>

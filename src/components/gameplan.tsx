@@ -115,7 +115,7 @@ function PhaseGroup({ n, all, shown, hiddenDone, current, showAll, filtered }: {
   return (
     <div id={"phase-" + n} className="pt-6 first:pt-4">
       <div className="flex items-baseline gap-3">
-        <span className={cn("num text-[13px] font-bold", current ? "text-accent" : "text-faint")}>{n}</span>
+        <span className={cn("num text-[13px] font-bold", current ? "text-accent" : "text-muted")}>{n}</span>
         <div className="min-w-0 flex-1">
           <h3 className="flex flex-wrap items-baseline gap-x-2 text-[16.5px] font-bold tracking-[-0.01em]">
             {p.name}
