@@ -237,6 +237,7 @@ test("text: mojibake from an import is repaired, clean text is untouched", () =>
   assert.equal(fixMojibake("Louisiana for ‚Äúa little something extra.‚Äù"), "Louisiana for “a little something extra.”");
   assert.equal(fixMojibake("PC · Steam"), "PC · Steam");
   assert.equal(fixMojibake("Plain text, ¬ alone"), "Plain text, ¬ alone");
+  assert.equal(fixMojibake("PC ¬∑ Steam — details"), "PC · Steam — details");
   assert.deepEqual(splitPlatforms("PC ¬∑ Steam"), ["PC", "Steam"]);
 });
 

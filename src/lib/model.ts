@@ -107,22 +107,22 @@ const MAC_ROMAN_HIGH = "ÄÅÇÉÑÖÜáàâäãåçéèêëíìîïñóòôöõ
  *  turned back into what it was. Anything that doesn't decode cleanly is left alone. */
 export function fixMojibake(s: string): string {
   if (!/[¬‚„Ä√ÇÃ]/.test(s)) return s;
-  const bytes: number[] = [];
-  for (const ch of s) {
-    const c = ch.codePointAt(0)!;
-    if (c < 0x80) bytes.push(c);
-    else {
+  const high = "\\u0080-\\uFFFF";
+  // Repair each run of non-ASCII characters on its own, so clean text around it is left alone.
+  return s.replace(new RegExp(`[${high}]{2,}`, "gu"), (run) => {
+    const bytes: number[] = [];
+    for (const ch of run) {
       const i = MAC_ROMAN_HIGH.indexOf(ch);
-      if (i < 0) return s;
+      if (i < 0) return run;
       bytes.push(0x80 + i);
     }
-  }
-  try {
-    const out = new TextDecoder("utf-8", { fatal: true }).decode(new Uint8Array(bytes));
-    return out.length < s.length ? out : s;
-  } catch {
-    return s;
-  }
+    try {
+      const out = new TextDecoder("utf-8", { fatal: true }).decode(new Uint8Array(bytes));
+      return out.length < run.length ? out : run;
+    } catch {
+      return run;
+    }
+  });
 }
 const str = (v: unknown) => (typeof v === "string" ? fixMojibake(v) : typeof v === "number" ? String(v) : "");
 const num = (v: unknown, d: number) => (typeof v === "number" && Number.isFinite(v) ? v : typeof v === "string" && v.trim() && Number.isFinite(+v) ? +v : d);
@@ -701,7 +701,7 @@ export interface SigningState {
  *  sentence, whether both founders agreed to the terms, whether the state approved the LLC, and the nearby steps. */
 export function signingState(steps: Step[], decisions: Decision[], team: Team): SigningState {
   const find = (re: RegExp) => steps.find((s) => re.test(s.title));
-  const sign = find(/operating agreement/i) || null;
+  const sign = find(/\bsign\b.*operating agreement/i) || null;
   const before: SigningItem[] = [];
   const alongside: SigningItem[] = [];
   const signed = !!sign && sign.status === "done";
@@ -731,7 +731,7 @@ export function signingState(steps: Step[], decisions: Decision[], team: Team): 
 
   // 3. The state approves the LLC.
   const filing = find(/articles of organization/i);
-  if (filing) before.push({ id: "state", label: "New Mexico approves the LLC", who: "state", done: filing.status === "done", note: filing.status === "done" ? undefined : "Filed, waiting on the state", stepId: filing.id });
+  if (filing) before.push({ id: "state", label: "New Mexico approves the LLC", who: "state", done: filing.status === "done", note: filing.status === "done" ? undefined : filing.status === "todo" ? "Not filed yet" : "Filed, waiting on the state", stepId: filing.id });
 
   // Alongside: not written down as a condition for signing.
   const spouse = find(/spouse consent/i);

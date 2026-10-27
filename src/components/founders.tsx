@@ -356,7 +356,7 @@ function HoursLog({ hours, loading, memberOf }: { hours: HoursRow[]; loading: bo
                       return (
                         <td key={r} className="min-w-[92px] py-2 pr-2.5 sm:min-w-[120px] sm:pr-3">
                           {mineCell ? (
-                            <button type="button" onClick={() => pick(w)} className="tap hit -my-1 block w-full rounded-lg px-1 py-1 text-left hover:bg-hover" aria-label={`Edit your hours for ${weekLabel(w)}`}>
+                            <button type="button" onClick={() => pick(w)} className="tap -my-1 block min-h-[34px] w-full rounded-lg px-1 py-1 text-left hover:bg-hover max-md:min-h-[40px]" aria-label={`Edit your hours for ${weekLabel(w)}`}>
                               {inner}
                             </button>
                           ) : (
