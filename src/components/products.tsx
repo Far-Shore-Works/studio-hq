@@ -19,6 +19,9 @@ export function Products() {
   const list = useMemo(() => products.slice().sort(byOrder), [products]);
   return (
     <Section id="products" icon={<Boxes size={17} strokeWidth={2.1} />} title="Products" meta={ready.products ? `${list.length} ${list.length === 1 ? "product" : "products"}` : "Loading"}>
+      <p className="mb-3 text-[14px] leading-relaxed text-ink2">
+        <b className="font-semibold text-ink">Every game and app either of you makes goes into the studio</b>, agreed Oct 26, so this list is a convenience and not the record. Aaron's games are in too and aren't listed here yet.
+      </p>
       {!ready.products ? (
         <div className="grid gap-3 md:grid-cols-2">
           <Skel className="h-40 rounded-2xl" />
@@ -79,7 +82,7 @@ function ProductCard({ p }: { p: Product }) {
         <div className="flex items-center gap-2">
           <span className="eyebrow !text-[12.5px]">Next</span>
           {canWrite && !editing && (
-            <button type="button" onClick={() => (setDraft(p.next), setEditing(true))} className="tap ml-auto flex h-6 items-center gap-1 rounded-full px-2 text-[12.5px] font-semibold text-muted hover:bg-hover hover:text-ink" aria-label={`Edit the next step for ${p.name}`}>
+            <button type="button" onClick={() => (setDraft(p.next), setEditing(true))} className="tap hit ml-auto flex h-6 items-center gap-1 rounded-full px-2 text-[12.5px] font-semibold text-muted hover:bg-hover hover:text-ink" aria-label={`Edit the next step for ${p.name}`}>
               <Pencil size={12} /> Edit
             </button>
           )}

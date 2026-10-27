@@ -195,7 +195,7 @@ export function Seg<T extends string>({
           aria-checked={value === o.id}
           disabled={disabled}
           onClick={() => value !== o.id && onChange(o.id)}
-          className={cn("seg-item tap", size === "sm" && "!h-[26px] !px-2.5 !text-[12.5px]")}
+          className={cn("seg-item tap", size === "sm" && "!h-[26px] !px-2.5 !text-[12.5px] max-md:!h-[34px] max-md:!px-3")}
         >
           {value === o.id && <motion.span layoutId={"seg-" + uid} className="seg-pill" transition={{ type: "spring", stiffness: 520, damping: 42 }} />}
           <span className="relative">{o.label}</span>
@@ -236,7 +236,7 @@ export function Menu({
   }, [open]);
   return (
     <div ref={ref} className="relative inline-flex">
-      <button type="button" aria-haspopup="menu" aria-expanded={open} aria-label={label} disabled={disabled} onClick={() => setOpen((o) => !o)} className="tap rounded-full disabled:cursor-default">
+      <button type="button" aria-haspopup="menu" aria-expanded={open} aria-label={label} disabled={disabled} onClick={() => setOpen((o) => !o)} className="tap hit rounded-full disabled:cursor-default">
         {trigger(open)}
       </button>
       {open && (

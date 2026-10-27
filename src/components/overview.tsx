@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, CircleDollarSign, Flag, ListChecks, Scale } from "lucide-react";
+import { Check, ChevronDown, CircleDollarSign, FileSignature, Flag, ListChecks, Scale } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { costSummary, currentPhase, dueInfo, isSettled, moneyRange, phaseStats, PHASES, upNext, type Role } from "@/lib/model";
+import { costSummary, currentPhase, dueInfo, isSettled, moneyRange, phaseStats, PHASES, signingState, upNext, type Role, type SigningItem } from "@/lib/model";
 import { cn } from "@/lib/utils";
 import { Avatar, Count, Skel, StatusGlyph } from "./bits";
 import { useUi } from "./ui";
@@ -23,6 +23,7 @@ export function Overview() {
 
   return (
     <div id="overview" className="space-y-3">
+      <SigningCard />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {/* Phase */}
         <button type="button" className="stat tap" onClick={() => scrollTo(cur >= 1 && cur <= 6 ? "phase-" + cur : "gameplan")} aria-label={curName ? `Current phase ${cur}, ${curName}. Go to it.` : "Go to the gameplan"}>
@@ -171,6 +172,54 @@ function UpNext({ who }: { who: Role }) {
             );
           })}
         </ul>
+      )}
+    </section>
+  );
+}
+
+/** What is left before the founders sign the operating agreement, read from the gameplan and decisions. */
+function SigningCard() {
+  const { steps, decisions, team, ready, roleName } = useStore();
+  const { focusStep, scrollTo } = useUi();
+  const st = useMemo(() => signingState(steps, decisions, team), [steps, decisions, team]);
+  if (!ready.steps || !st.step) return null;
+  const who = (w: SigningItem["who"]) => (w === "state" ? "The state" : w === "both" ? "Both" : roleName(w));
+  const open = (i: SigningItem) => (i.id === "agree" ? scrollTo("decisions") : i.stepId ? focusStep(i.stepId) : undefined);
+  const row = (i: SigningItem) => (
+    <li key={i.id}>
+      <button type="button" onClick={() => open(i)} className="group flex min-h-[46px] w-full items-center gap-3 rounded-lg py-1.5 text-left">
+        <span className={cn("flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full", i.done ? "bg-ok text-white" : "ring-[1.6px] ring-inset ring-line2")} aria-hidden="true">
+          {i.done && <Check size={14} strokeWidth={3} />}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className={cn("block text-[14.5px] leading-snug group-hover:text-accent", i.done ? "text-muted line-through decoration-line2" : "text-ink")}>{i.label}</span>
+          {i.note && !i.done && <span className="block text-[12.5px] leading-snug text-muted">{i.note}</span>}
+        </span>
+        <span className="chip shrink-0">{i.done ? "Done" : who(i.who)}</span>
+      </button>
+    </li>
+  );
+  return (
+    <section className="card px-5 pb-2 pt-4 sm:px-6" aria-labelledby="signing-h" title="Read from the gameplan and decisions below, so it changes when they do.">
+      <header className="flex items-start gap-2.5">
+        <FileSignature size={17} strokeWidth={2.1} className="mt-[3px] shrink-0 text-accent" aria-hidden="true" />
+        <h2 id="signing-h" className="min-w-0 flex-1 text-[16px] font-bold leading-snug tracking-[-0.01em]">
+          Before the operating agreement is signed
+        </h2>
+        <span className={cn("chip shrink-0 font-semibold", st.signed ? "chip-ok" : st.left ? "chip-late" : "chip-ok")}>{st.signed ? "Signed" : st.left ? `${st.left} left` : "Ready to sign"}</span>
+      </header>
+      {st.signed ? (
+        <p className="py-3 text-[14px] text-muted">The operating agreement is signed.</p>
+      ) : (
+        <>
+          <ul className="rows mt-1">{st.before.map(row)}</ul>
+          {st.alongside.some((i) => !i.done) && (
+            <>
+              <p className="eyebrow mt-2">Also open nearby</p>
+              <ul className="rows mt-0.5">{st.alongside.filter((i) => !i.done).map(row)}</ul>
+            </>
+          )}
+        </>
       )}
     </section>
   );

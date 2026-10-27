@@ -107,7 +107,7 @@ function TopBar({ name, theme, setTheme }: { name: string; theme: ThemePref; set
               href={"#" + n.id}
               onClick={(e) => (e.preventDefault(), scrollTo(n.id))}
               aria-current={cur === n.id ? "location" : undefined}
-              className={cn("tap relative block whitespace-nowrap rounded-full px-3.5 py-1.5 text-[14px] font-medium", cur === n.id ? "text-ink" : "text-muted hover:bg-hover hover:text-ink")}
+              className={cn("tap relative block whitespace-nowrap rounded-full px-3.5 py-1.5 text-[14px] font-medium max-md:py-2.5", cur === n.id ? "text-ink" : "text-muted hover:bg-hover hover:text-ink")}
             >
               {cur === n.id && <motion.span layoutId="nav-pill" className="absolute inset-0 rounded-full bg-accent/[0.13]" transition={{ type: "spring", stiffness: 520, damping: 42 }} />}
               <span className={cn("relative", cur === n.id && "font-semibold")}>{n.label}</span>
@@ -133,7 +133,7 @@ function TopBar({ name, theme, setTheme }: { name: string; theme: ThemePref; set
         <button
           type="button"
           onClick={() => setTheme(next[theme])}
-          className="tap ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted hover:bg-hover hover:text-ink md:ml-0"
+          className="tap ml-auto flex h-9 w-9 max-md:h-10 max-md:w-10 shrink-0 items-center justify-center rounded-full text-muted hover:bg-hover hover:text-ink md:ml-0"
           aria-label={`Theme: ${theme}. Switch to ${next[theme]}`}
           title={`Theme: ${theme}`}
         >
@@ -142,7 +142,7 @@ function TopBar({ name, theme, setTheme }: { name: string; theme: ThemePref; set
         <button
           type="button"
           onClick={() => void signOut()}
-          className="tap flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted hover:bg-hover hover:text-ink"
+          className="tap flex h-9 w-9 max-md:h-10 max-md:w-10 shrink-0 items-center justify-center rounded-full text-muted hover:bg-hover hover:text-ink"
           aria-label={`Sign out${email ? " of " + email : ""}`}
           title={`Sign out${email ? " (" + email + ")" : ""}`}
         >
@@ -171,7 +171,7 @@ function Hero() {
             {meta.links.map((l, i) => (
               <li key={i}>
                 {l.url ? (
-                  <a href={l.url} target="_blank" rel="noopener noreferrer" className="tap inline-flex h-8 items-center gap-1.5 rounded-full bg-raised px-3.5 text-[13.5px] font-semibold text-ink shadow-[var(--card-shadow)] hover:text-accent">
+                  <a href={l.url} target="_blank" rel="noopener noreferrer" className="tap inline-flex h-8 items-center gap-1.5 rounded-full bg-raised px-3.5 max-md:h-10 text-[13.5px] font-semibold text-ink shadow-[var(--card-shadow)] hover:text-accent">
                     {l.label}
                     <ArrowUpRight size={14} className="text-faint" />
                   </a>

@@ -137,7 +137,7 @@ function PhaseGroup({ n, all, shown, hiddenDone, current, showAll, filtered }: {
       </div>
       <div className="mt-1 flex flex-wrap items-center gap-x-3 sm:pl-6">
         {hiddenDone > 0 && (
-          <button type="button" onClick={showAll} className="py-1.5 text-[13px] text-muted hover:text-ink">
+          <button type="button" onClick={showAll} className="py-1.5 text-[13px] text-muted hover:text-ink max-md:min-h-[40px]">
             {hiddenDone} done and tucked away. <span className="font-semibold underline underline-offset-2">Show</span>
           </button>
         )}
@@ -147,7 +147,7 @@ function PhaseGroup({ n, all, shown, hiddenDone, current, showAll, filtered }: {
               <AddField placeholder={`A new step for ${p.name}`} label={`Add a step to ${p.name}`} onAdd={addStep} autoFocus onCancel={() => setAdding(false)} />
             </div>
           ) : (
-            <button type="button" onClick={() => setAdding(true)} className="tap -ml-1 flex items-center gap-1.5 rounded-full px-1 py-1.5 text-[13.5px] font-semibold text-muted hover:text-accent">
+            <button type="button" onClick={() => setAdding(true)} className="tap -ml-1 flex items-center gap-1.5 rounded-full px-1 py-1.5 text-[13.5px] font-semibold text-muted hover:text-accent max-md:min-h-[40px]">
               <Plus size={15} /> Add a step
             </button>
           ))}
@@ -170,7 +170,7 @@ function StepRow({ s }: { s: Step }) {
       <div className="flex items-start gap-3 py-2.5">
         <button
           type="button"
-          className="tap mt-[1px] shrink-0 rounded-full disabled:opacity-60"
+          className="tap hit mt-[1px] shrink-0 rounded-full disabled:opacity-60"
           onClick={() => set({ status: NEXT_TOGGLE[s.status] })}
           disabled={!canWrite}
           aria-label={s.status === "done" ? `Mark "${s.title}" not done` : `Mark "${s.title}" done`}
@@ -201,7 +201,7 @@ function StepRow({ s }: { s: Step }) {
         </button>
         <div className="flex shrink-0 items-center gap-1 pt-[1px]">
           {due && <span className={cn("chip", due.tone === "late" ? "chip-bad" : due.tone === "soon" ? "chip-late" : "")}>{due.label}</span>}
-          <button type="button" onClick={() => toggleStep(s.id)} className="tap flex h-7 w-7 items-center justify-center rounded-full text-faint hover:bg-hover hover:text-ink" aria-label={open ? "Close details" : "Open details"} tabIndex={-1}>
+          <button type="button" onClick={() => toggleStep(s.id)} className="tap hit flex h-7 w-7 items-center justify-center rounded-full text-faint hover:bg-hover hover:text-ink" aria-label={open ? "Close details" : "Open details"} tabIndex={-1}>
             <ChevronDown size={16} className={cn("transition-transform duration-200", open && "rotate-180")} />
           </button>
         </div>

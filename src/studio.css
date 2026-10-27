@@ -775,3 +775,28 @@ input[type="date"] {
 :root[data-theme="dark"] .brand-mark {
   box-shadow: 0 0 0 1px rgb(255 255 255 / 0.16);
 }
+
+/* A small control keeps its look but gets a finger-sized hit area (the pseudo-element is part of the button). */
+.hit {
+  position: relative;
+}
+.hit::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
+}
+@media (max-width: 767px) {
+  /* The sticky header is two rows tall on a phone (title, then the section tabs), so jumps land below it. */
+  html {
+    scroll-padding-top: 128px;
+  }
+  .md :is(h1, h2, h3, h4).md-h {
+    scroll-margin-top: 134px;
+  }
+  .btn-sm {
+    height: 36px;
+  }
+  .chip {
+    height: 26px;
+  }
+}

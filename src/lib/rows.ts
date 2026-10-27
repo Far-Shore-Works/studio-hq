@@ -135,6 +135,10 @@ export function changeSummary(e: AuditEntry): string {
       continue;
     }
     const to = (v as Row)?.to;
+    if (k === "text" && to === "updated" && e.table === "docs") {
+      parts.push("text refreshed"); // a doc re-synced from its source file
+      continue;
+    }
     const label = FIELD[k] || k.replace(/_/g, " ");
     parts.push((typeof to === "string" && to.length <= 40) || typeof to === "number" ? `${label} → ${to}` : to == null ? `${label} cleared` : `${label} edited`);
   }

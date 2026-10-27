@@ -102,7 +102,29 @@ export interface Team {
 }
 
 type Raw = Record<string, unknown> | null | undefined;
-const str = (v: unknown) => (typeof v === "string" ? v : typeof v === "number" ? String(v) : "");
+const MAC_ROMAN_HIGH = "ÄÅÇÉÑÖÜáàâäãåçéèêëíìîïñóòôöõúùûü†°¢£§•¶ß®©™´¨≠ÆØ∞±≤≥¥µ∂∑∏π∫ªºΩæø¿¡¬√ƒ≈∆«»… ÀÃÕŒœ–—“”‘’÷◊ÿŸ⁄€‹›ﬁﬂ‡·‚„‰ÂÊÁËÈÍÎÏÌÓÔÒÚÛÙıˆ˜¯˘˙˚¸˝˛ˇ";
+/** Text that was UTF-8 but got read as Mac Roman somewhere in an import ("PC ¬∑ Steam", "‚Äúquoted‚Äù") is
+ *  turned back into what it was. Anything that doesn't decode cleanly is left alone. */
+export function fixMojibake(s: string): string {
+  if (!/[¬‚„Ä√ÇÃ]/.test(s)) return s;
+  const bytes: number[] = [];
+  for (const ch of s) {
+    const c = ch.codePointAt(0)!;
+    if (c < 0x80) bytes.push(c);
+    else {
+      const i = MAC_ROMAN_HIGH.indexOf(ch);
+      if (i < 0) return s;
+      bytes.push(0x80 + i);
+    }
+  }
+  try {
+    const out = new TextDecoder("utf-8", { fatal: true }).decode(new Uint8Array(bytes));
+    return out.length < s.length ? out : s;
+  } catch {
+    return s;
+  }
+}
+const str = (v: unknown) => (typeof v === "string" ? fixMojibake(v) : typeof v === "number" ? String(v) : "");
 const num = (v: unknown, d: number) => (typeof v === "number" && Number.isFinite(v) ? v : typeof v === "string" && v.trim() && Number.isFinite(+v) ? +v : d);
 const isDay = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s);
 
@@ -162,7 +184,10 @@ export function normName(id: string, d: Raw): NameIdea | null {
 }
 /** "PC · Steam", "Web, iOS" or an array, as chips. */
 export function splitPlatforms(v: unknown): string[] {
-  const parts = Array.isArray(v) ? v.map(str) : str(v).split(/\s*[·,/|]\s*/);
+  // A comma only separates platforms in a plain list ("Web, iOS"), not in a phrase ("itch.io first, then Steam").
+  const text = str(v);
+  const splitter = /,\s*(then|and|later|first)\b/i.test(text) ? /\s*[·/|]\s*/ : /\s*[·,/|]\s*/;
+  const parts = Array.isArray(v) ? v.map(str) : text.split(splitter);
   return parts.map((s) => s.trim()).filter(Boolean);
 }
 export function normProduct(id: string, d: Raw): Product | null {
@@ -647,4 +672,73 @@ export function moneyIn(rows: LedgerRow[], names: Record<Role, string[]>): Money
 export function dollars(n: number): string {
   const r = Math.round(n * 100) / 100;
   return "$" + (Number.isInteger(r) ? r.toLocaleString("en-US") : r.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+}
+
+// ---- Before the operating agreement is signed ---------------------------------------------------
+export interface SigningItem {
+  id: string;
+  /** What has to happen, in plain words. */
+  label: string;
+  /** Who it waits on. */
+  who: Owner | "state";
+  done: boolean;
+  /** One more line of context, when there is one. */
+  note?: string;
+  /** The step to open when the item is tapped. */
+  stepId?: string;
+}
+export interface SigningState {
+  /** The "sign the operating agreement" step; null when the plan has none. */
+  step: Step | null;
+  signed: boolean;
+  /** Has to happen before the signing. */
+  before: SigningItem[];
+  /** Open in the same stretch of the plan, but not tied to the signing by anything written down. */
+  alongside: SigningItem[];
+  left: number;
+}
+/** What is still open before the two founders sign, read from the plan as it stands: the signing step's "Still open:"
+ *  sentence, whether both founders agreed to the terms, whether the state approved the LLC, and the nearby steps. */
+export function signingState(steps: Step[], decisions: Decision[], team: Team): SigningState {
+  const find = (re: RegExp) => steps.find((s) => re.test(s.title));
+  const sign = find(/operating agreement/i) || null;
+  const before: SigningItem[] = [];
+  const alongside: SigningItem[] = [];
+  const signed = !!sign && sign.status === "done";
+
+  // 1. Both founders agree to the terms (the decision about the agreement).
+  const dec = decisions.find((d) => /operating agreement/i.test(d.title) && d.agree);
+  if (dec) {
+    const ids = agreedIds(dec);
+    const chris = !!team.chris && ids.includes(team.chris);
+    const aaron = !!team.aaron && ids.includes(team.aaron);
+    const waiting = !chris && !aaron ? "Neither founder has agreed yet" : !chris ? "Waiting on Chris" : !aaron ? "Waiting on Aaron" : "Both agreed";
+    before.push({ id: "agree", label: "Both founders agree to the terms", who: !chris && !aaron ? "both" : !chris ? "chris" : "aaron", done: isSettled(dec, team), note: waiting });
+  }
+
+  // 2. What the signing step says is still open ("Still open: ...; ... Sign once ...").
+  const m = sign?.note.match(/Still open:\s*(.+?)(?:\.\s+(?:Sign|Not signed)\b|\.\s*$|$)/s);
+  if (m && !signed) {
+    m[1]
+      .split(/;\s*/)
+      .map((t) => t.trim().replace(/\.$/, ""))
+      .filter(Boolean)
+      .forEach((t, i) => {
+        const who: Owner = /^aaron\b/i.test(t) ? "aaron" : /^chris\b/i.test(t) ? "chris" : "both";
+        before.push({ id: "open-" + i, label: t.charAt(0).toUpperCase() + t.slice(1), who, done: false, stepId: sign!.id });
+      });
+  }
+
+  // 3. The state approves the LLC.
+  const filing = find(/articles of organization/i);
+  if (filing) before.push({ id: "state", label: "New Mexico approves the LLC", who: "state", done: filing.status === "done", note: filing.status === "done" ? undefined : "Filed, waiting on the state", stepId: filing.id });
+
+  // Alongside: not written down as a condition for signing.
+  const spouse = find(/spouse consent/i);
+  if (spouse) alongside.push({ id: spouse.id, label: "Spouse consent forms", who: spouse.owner || "both", done: spouse.status === "done", stepId: spouse.id });
+  const air = find(/outside-activity approval \(DAF/i);
+  if (air) alongside.push({ id: air.id, label: "Air Force written approval", who: air.owner || "chris", done: air.status === "done", note: "Verbal go-ahead given; written approval pending", stepId: air.id });
+
+  const left = before.filter((i) => !i.done).length;
+  return { step: sign, signed, before, alongside, left };
 }

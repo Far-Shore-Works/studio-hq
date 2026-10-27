@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  normStep, normDecision, normName, normProduct, normMeta, normStatus, parseCost, costSummary, currentPhase,
+  fixMojibake, signingState, normStep, normDecision, normName, normProduct, normMeta, normStatus, parseCost, costSummary, currentPhase,
   upNext, isSettled, rankNames, dueInfo, roleOf, moneyRange, phaseStats, splitPlatforms, safeUrl, type Step,
   normDoc, searchDocs, plainText, sourceLink, sourceParts, siblingDocs, normHours, hoursStats, weekStartOf, addDays, weekLabel, fmtHours, normLedger, moneyIn, dollars, type Doc,
 } from "../src/lib/model.ts";
@@ -230,4 +230,46 @@ test("docs: files from the same repo folder point at each other; top-level files
   assert.deepEqual(siblingDocs(csv, all).map((d) => d.slug), ["ledger-readme"]);
   assert.deepEqual(siblingDocs(terms, all), []);
   assert.deepEqual(siblingDocs(mk("x", ""), all), []);
+});
+
+test("text: mojibake from an import is repaired, clean text is untouched", () => {
+  assert.equal(fixMojibake("PC ¬∑ Steam"), "PC · Steam");
+  assert.equal(fixMojibake("Louisiana for ‚Äúa little something extra.‚Äù"), "Louisiana for “a little something extra.”");
+  assert.equal(fixMojibake("PC · Steam"), "PC · Steam");
+  assert.equal(fixMojibake("Plain text, ¬ alone"), "Plain text, ¬ alone");
+  assert.deepEqual(splitPlatforms("PC ¬∑ Steam"), ["PC", "Steam"]);
+});
+
+test("platforms: a phrase with a comma stays one chip, a plain list splits", () => {
+  assert.deepEqual(splitPlatforms("itch.io first, then Steam"), ["itch.io first, then Steam"]);
+  assert.deepEqual(splitPlatforms("Web, iOS"), ["Web", "iOS"]);
+  assert.deepEqual(splitPlatforms("Steam · Roblox · App Store"), ["Steam", "Roblox", "App Store"]);
+});
+
+test("signing: reads what is open from the plan", () => {
+  const team = { chris: "c", aaron: "a" };
+  const steps = [
+    step("sign", { title: "Sign the operating agreement: ownership", note: "Agreed Oct 26: roles. Still open: Aaron confirms the three items (vesting start, buyout formula); both fill Schedules C and F (B only if keeping something out). Sign once the state approves the LLC. Not signed." }),
+    step("file", { title: "File the articles of organization", status: "doing" }),
+    step("sp", { title: "Spouse consent forms (Louisiana)" }),
+    step("af", { title: "Air Force outside-activity approval (DAF Form 3902)", owner: "chris", status: "doing" }),
+  ];
+  const dec = normDecision("d8", { title: "Founder terms v2 and operating agreement v1 (draft)", agree: { c: "2026-10-26" } })!;
+  const r = signingState(steps, [dec], team);
+  assert.equal(r.signed, false);
+  assert.deepEqual(r.before.map((i) => i.label), [
+    "Both founders agree to the terms",
+    "Aaron confirms the three items (vesting start, buyout formula)",
+    "Both fill Schedules C and F (B only if keeping something out)",
+    "New Mexico approves the LLC",
+  ]);
+  assert.equal(r.before[0].who, "aaron");
+  assert.equal(r.before[0].note, "Waiting on Aaron");
+  assert.equal(r.left, 4);
+  assert.deepEqual(r.alongside.map((i) => i.label), ["Spouse consent forms", "Air Force written approval"]);
+  // Everything done: nothing left, and a plan with no such steps doesn't break.
+  const done = signingState(steps.map((s) => ({ ...s, status: "done" as const })), [{ ...dec, agree: { c: "x", a: "y" } }], team);
+  assert.equal(done.signed, true);
+  assert.equal(done.left, 0);
+  assert.deepEqual(signingState([], [], team).before, []);
 });

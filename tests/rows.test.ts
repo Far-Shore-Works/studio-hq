@@ -55,3 +55,8 @@ test("changes: audit rows read as plain sentences", () => {
   assert.equal(actorLabel(normAudit({ id: 8, at: "", table_name: "x", op: "insert", via: "service_role" })!, (r) => r), "An agent (service role)");
   assert.equal(normAudit({ table_name: "x", op: "truncate" }), null);
 });
+
+test("changes: a doc re-synced from its file reads as a refresh", () => {
+  const e = normAudit({ id: 9, at: "2026-10-26T20:00:00Z", table_name: "docs", row_id: "x", op: "update", who: null, via: "agent", changes: { text: { to: "updated", from: null } } })!;
+  assert.equal(changeSummary(e), "text refreshed");
+});
