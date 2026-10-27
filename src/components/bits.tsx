@@ -186,13 +186,28 @@ export function Seg<T extends string>({
 }) {
   const uid = useId();
   return (
-    <div className="seg scroll-x w-fit" role="radiogroup" aria-label={label}>
+    <div
+      className="seg scroll-x w-fit"
+      role="radiogroup"
+      aria-label={label}
+      onKeyDown={(e) => {
+        // Arrow keys move the choice, as in any radio group; only the chosen item is a tab stop.
+        const step = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0;
+        if (!step || disabled) return;
+        e.preventDefault();
+        const i = options.findIndex((o) => o.id === value);
+        const next = options[(i + step + options.length) % options.length];
+        onChange(next.id);
+        requestAnimationFrame(() => (e.currentTarget.querySelector('[aria-checked="true"]') as HTMLElement | null)?.focus());
+      }}
+    >
       {options.map((o) => (
         <button
           key={o.id}
           type="button"
           role="radio"
           aria-checked={value === o.id}
+          tabIndex={value === o.id ? 0 : -1}
           disabled={disabled}
           onClick={() => value !== o.id && onChange(o.id)}
           className={cn("seg-item tap", size === "sm" && "!h-[26px] !px-2.5 !text-[12.5px] max-md:!h-[34px] max-md:!px-3")}
@@ -221,10 +236,18 @@ export function Menu({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const trig = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (!open) return;
+    // Keyboard: land on the current choice, and give focus back to the button when the menu closes with Escape.
+    const items = ref.current?.querySelectorAll<HTMLElement>('[role="menuitemradio"]');
+    (Array.from(items || []).find((b) => b.getAttribute("aria-checked") === "true") || items?.[0])?.focus();
     const off = (e: MouseEvent | TouchEvent) => ref.current && !ref.current.contains(e.target as Node) && setOpen(false);
-    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const esc = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      trig.current?.focus();
+    };
     document.addEventListener("mousedown", off);
     document.addEventListener("touchstart", off);
     document.addEventListener("keydown", esc);
@@ -236,12 +259,18 @@ export function Menu({
   }, [open]);
   return (
     <div ref={ref} className="relative inline-flex">
-      <button type="button" aria-haspopup="menu" aria-expanded={open} aria-label={label} disabled={disabled} onClick={() => setOpen((o) => !o)} className="tap hit rounded-full disabled:cursor-default">
+      <button ref={trig} type="button" aria-haspopup="menu" aria-expanded={open} aria-label={label} disabled={disabled} onClick={() => setOpen((o) => !o)} className="tap hit rounded-full disabled:cursor-default">
         {trigger(open)}
       </button>
       {open && (
         <motion.div
           role="menu"
+          onKeyDown={(e) => {
+            const all = Array.from(e.currentTarget.querySelectorAll<HTMLElement>('[role="menuitemradio"]'));
+            const i = all.indexOf(document.activeElement as HTMLElement);
+            const to = e.key === "ArrowDown" ? all[(i + 1) % all.length] : e.key === "ArrowUp" ? all[(i - 1 + all.length) % all.length] : e.key === "Home" ? all[0] : e.key === "End" ? all[all.length - 1] : null;
+            if (to) (e.preventDefault(), to.focus());
+          }}
           initial={{ opacity: 0, y: -4, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.14 }}
@@ -257,7 +286,7 @@ export function Menu({
                 setOpen(false);
                 it.onSelect();
               }}
-              className={cn("flex w-full items-center gap-2 rounded-[10px] px-3 py-2 text-left text-[14px] hover:bg-hover", it.active ? "font-semibold text-ink" : "text-ink2")}
+              className={cn("flex min-h-[38px] w-full items-center gap-2 rounded-[10px] px-3 py-2 text-left text-[14px] hover:bg-hover max-md:min-h-[44px]", it.active ? "font-semibold text-ink" : "text-ink2")}
             >
               <span className="min-w-0 flex-1">{it.label}</span>
               {it.active && <Check size={14} className="text-accent" />}

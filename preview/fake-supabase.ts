@@ -6,6 +6,8 @@
 //   ?as=aaron     view as Aaron instead of Chris
 //   ?outsider=1   signed in with an email that isn't on the list
 //   ?missing=docs,hours   those tables error as if the database migration hadn't been applied
+//   ?slow=2000    every read waits (staggered up to 2.5x) so loading states can be looked at
+//   ?fail=1       every read fails (the "can't reach the data" state)
 
 type Row = Record<string, unknown>;
 type Cb = () => void;
@@ -22,6 +24,9 @@ const ready = fetch("/preview/seed.local.json")
     db = seed || {};
     db.members = qs.get("outsider") ? [] : (db.members || []).map((m) => ({ ...m, user_id: m.role === ME_ROLE ? USER_ID : null }));
   });
+const SLOW = +(qs.get("slow") || 0);
+const FAIL = !!qs.get("fail");
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const missing = (qs.get("missing") || "").split(",").filter(Boolean);
 const emit = () => listeners.forEach((f) => setTimeout(f, 30));
 
@@ -52,7 +57,9 @@ function query(table: string) {
       return api;
     },
     then: (res: (v: { data: unknown; error: null }) => void) =>
-      ready.then(() => {
+      ready.then(async () => {
+        if (SLOW) await wait(SLOW * (1 + (table.length % 4) * 0.5));
+        if (FAIL) return res({ data: null, error: { code: "500", message: "preview failure" } } as never);
         if (missing.includes(table)) return res({ data: null, error: { code: "42P01", message: "relation does not exist" } } as never);
         const r = rows();
         res({ data: single ? r[0] || null : r, error: null });

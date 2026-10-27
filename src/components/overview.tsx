@@ -8,8 +8,9 @@ import { Avatar, Count, Skel, StatusGlyph } from "./bits";
 import { useUi } from "./ui";
 
 export function Overview() {
-  const { steps, decisions, team, ready } = useStore();
+  const { steps, decisions, team, ready, mode } = useStore();
   const { scrollTo } = useUi();
+  const noData = (mode === "error" || mode === "offline") && steps.length === 0;
   const [costsOpen, setCostsOpen] = useState(false);
   const loading = !ready.steps;
   const stats = useMemo(() => phaseStats(steps), [steps]);
@@ -33,7 +34,7 @@ export function Overview() {
           {loading ? (
             <Skel className="mt-2 h-8 w-28" />
           ) : (
-            <span className="stat-num">{cur === 0 ? "Not started" : cur === 7 ? "All done" : <>{cur}<span className="text-faint"> · </span>{curName}</>}</span>
+            <span className="stat-num">{noData ? "—" : cur === 0 ? "Not started" : cur === 7 ? "All done" : <>{cur}<span className="text-faint"> · </span>{curName}</>}</span>
           )}
           <span className="mt-2.5 flex gap-1" aria-hidden="true">
             {stats.map((p) => (
@@ -59,8 +60,8 @@ export function Overview() {
             <Skel className="mt-2 h-8 w-24" />
           ) : (
             <span className="stat-num">
-              <Count to={done} />
-              <span className="text-[17px] font-semibold text-muted"> of {steps.length}</span>
+              {noData ? "—" : <><Count to={done} />
+              <span className="text-[17px] font-semibold text-muted"> of {steps.length}</span></>}
             </span>
           )}
           <span className="mt-2.5 block h-1.5 overflow-hidden rounded-full bg-sunk" aria-hidden="true">
@@ -75,7 +76,7 @@ export function Overview() {
             <CircleDollarSign size={15} strokeWidth={2.2} /> Costs ahead
             <ChevronDown size={14} className={cn("ml-auto text-faint transition-transform", costsOpen && "rotate-180")} />
           </span>
-          {loading ? <Skel className="mt-2 h-8 w-32" /> : <span className="stat-num">{costs.lines.length ? moneyRange(costs.lo, costs.hi) : "$0"}</span>}
+          {loading ? <Skel className="mt-2 h-8 w-32" /> : <span className="stat-num">{noData ? "—" : costs.lines.length ? moneyRange(costs.lo, costs.hi) : "$0"}</span>}
           <span className="stat-sub mt-auto pt-1 sm:truncate">{loading ? " " : `Estimates · ${costs.lines.length} open ${costs.lines.length === 1 ? "step" : "steps"}`}</span>
         </button>
 
@@ -84,7 +85,7 @@ export function Overview() {
           <span className="stat-label">
             <Scale size={15} strokeWidth={2.2} /> Open decisions
           </span>
-          {loading ? <Skel className="mt-2 h-8 w-12" /> : <span className="stat-num">{openDecisions}</span>}
+          {loading ? <Skel className="mt-2 h-8 w-12" /> : <span className="stat-num">{noData ? "—" : openDecisions}</span>}
           <span className={cn("stat-sub mt-auto pt-1 sm:truncate", blocked > 0 && "font-semibold text-bad")}>{loading ? " " : blocked ? `${blocked} blocked ${blocked === 1 ? "step" : "steps"}` : "Nothing blocked"}</span>
         </button>
       </div>
@@ -123,7 +124,7 @@ export function Overview() {
 }
 
 function UpNext({ who }: { who: Role }) {
-  const { steps, ready, role, roleName, roleProfile } = useStore();
+  const { steps, ready, role, roleName, roleProfile, mode } = useStore();
   const { focusStep } = useUi();
   const list = upNext(steps, who);
   const open = steps.filter((s) => s.status !== "done" && (s.owner === who || s.owner === "both")).length;
@@ -146,7 +147,7 @@ function UpNext({ who }: { who: Role }) {
           <Skel className="h-4 w-2/3" />
         </div>
       ) : list.length === 0 ? (
-        <p className="py-4 text-[14px] text-muted">Nothing open right now.</p>
+        <p className="py-4 text-[14px] text-muted">{(mode === "error" || mode === "offline") && !steps.length ? "No data to show yet." : "Nothing open right now."}</p>
       ) : (
         <ul className="rows mt-2">
           {list.map((s) => {
@@ -185,7 +186,18 @@ function SigningCard() {
   const st = useMemo(() => signingState(steps, decisions, team, status), [steps, decisions, team, status]);
   // With nothing written down to wait on, say so rather than claim it is ready.
   const unknown = !st.signed && st.before.length === 0;
-  if (!known || !st.step) return null;
+  if (!known)
+    return (
+      <section className="card px-5 pb-4 pt-4 sm:px-6" aria-busy="true" aria-label="Before the operating agreement is signed, loading">
+        <Skel className="h-5 w-3/4" />
+        <div className="mt-4 space-y-3">
+          <Skel className="h-4 w-full" />
+          <Skel className="h-4 w-5/6" />
+          <Skel className="h-4 w-2/3" />
+        </div>
+      </section>
+    );
+  if (!st.step) return null;
   const who = (w: SigningItem["who"]) => (w === "state" ? "The state" : w === "both" ? "Both" : role === w ? "You" : roleName(w));
   const open = (i: SigningItem) => (i.id === "agree" ? scrollTo("decisions") : i.stepId ? focusStep(i.stepId) : undefined);
   const row = (i: SigningItem) => (
