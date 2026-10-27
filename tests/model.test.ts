@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  fixMojibake, signingState, normStep, normDecision, normName, normProduct, normMeta, normStatus, parseCost, costSummary, currentPhase,
+  fixMojibake, signingState, filingNote, normStep, normDecision, normName, normProduct, normMeta, normStatus, parseCost, costSummary, currentPhase,
   upNext, isSettled, rankNames, dueInfo, roleOf, moneyRange, phaseStats, splitPlatforms, safeUrl, type Step,
   normDoc, searchDocs, plainText, sourceLink, sourceParts, siblingDocs, normHours, hoursStats, weekStartOf, addDays, weekLabel, fmtHours, normLedger, moneyIn, dollars, type Doc,
 } from "../src/lib/model.ts";
@@ -271,8 +271,27 @@ test("signing: reads what is open from the plan", () => {
   assert.equal(r.left, 4);
   assert.deepEqual(r.alongside.map((i) => i.label), ["Spouse consent forms", "Air Force written approval"]);
   // Everything done: nothing left, and a plan with no such steps doesn't break.
-  const done = signingState(steps.map((s) => ({ ...s, status: "done" as const })), [{ ...dec, agree: { c: "x", a: "y" } }], team);
+  const done = signingState(steps.map((s) => ({ ...s, status: "done" as const })), [{ ...dec, agree: { c: "x", a: "y" } }], team, normStatus({ summary: "x", llcApprovedOn: "2026-11-02" }));
   assert.equal(done.signed, true);
   assert.equal(done.left, 0);
   assert.deepEqual(signingState([], [], team).before, []);
+});
+
+test("signing: finishing the filing step is not state approval", () => {
+  const team = { chris: "c", aaron: "a" };
+  const base = (st: "doing" | "done") => [
+    step("sign", { title: "Sign the operating agreement", note: "Still open: Aaron confirms. Sign once the state approves." }),
+    step("file", { title: "File the articles of organization", status: st, note: "Filed online Oct 23 with the NM Secretary of State. Waiting on state approval; the state was about 9 days behind (Oct 23)." }),
+  ];
+  const find = (r: ReturnType<typeof signingState>) => r.before.find((i) => i.id === "state")!;
+  assert.equal(find(signingState(base("doing"), [], team)).note, "Filed Oct 23, approval pending (~early Nov)");
+  const doneFiling = find(signingState(base("done"), [], team));
+  assert.equal(doneFiling.done, false);
+  // The explicit signals: a date in the status doc, or its own step marked done.
+  assert.equal(find(signingState(base("done"), [], team, normStatus({ summary: "x", llcApprovedOn: "2026-11-02" }))).done, true);
+  const own = [...base("doing"), step("ap", { title: "New Mexico approves the LLC", status: "done" })];
+  assert.equal(find(signingState(own, [], team)).done, true);
+  assert.equal(normStatus({ summary: "x", llcApprovedOn: "soon" })!.llcApprovedOn, "");
+  assert.equal(filingNote(undefined), "Not filed yet");
+  assert.equal(filingNote(step("f", { title: "File", status: "doing", note: "Filed Oct 28. Expect early Nov." })), "Filed Oct 28, approval pending (~early Nov)");
 });

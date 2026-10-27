@@ -179,10 +179,10 @@ function UpNext({ who }: { who: Role }) {
 
 /** What is left before the founders sign the operating agreement, read from the gameplan and decisions. */
 function SigningCard() {
-  const { steps, decisions, team, ready, roleName, role } = useStore();
+  const { steps, decisions, team, ready, roleName, role, status } = useStore();
   const known = ready.steps && ready.decisions && ready.members;
   const { focusStep, scrollTo } = useUi();
-  const st = useMemo(() => signingState(steps, decisions, team), [steps, decisions, team]);
+  const st = useMemo(() => signingState(steps, decisions, team, status), [steps, decisions, team, status]);
   // With nothing written down to wait on, say so rather than claim it is ready.
   const unknown = !st.signed && st.before.length === 0;
   if (!known || !st.step) return null;

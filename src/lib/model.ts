@@ -95,6 +95,8 @@ export interface Meta {
 export interface StatusDoc {
   summary: string;
   asOf: string;
+  /** YYYY-MM-DD the state approved the LLC; set only when that has happened. */
+  llcApprovedOn: string;
 }
 export interface Team {
   chris: string;
@@ -225,7 +227,8 @@ export function normMeta(d: Raw): Meta {
 export function normStatus(d: Raw): StatusDoc | null {
   if (!d) return null;
   const summary = str(d.summary).trim();
-  return summary ? { summary, asOf: str(d.asOf) } : null;
+  const ap = str(d.llcApprovedOn);
+  return summary ? { summary, asOf: str(d.asOf), llcApprovedOn: isDay(ap) ? ap : "" } : null;
 }
 export function normTeam(d: Raw): Team {
   return { chris: d ? str(d.chris) : "", aaron: d ? str(d.aaron) : "" };
@@ -700,7 +703,7 @@ export interface SigningState {
 }
 /** What is still open before the two founders sign, read from the plan as it stands: the signing step's "Still open:"
  *  sentence, whether both founders agreed to the terms, whether the state approved the LLC, and the nearby steps. */
-export function signingState(steps: Step[], decisions: Decision[], team: Team): SigningState {
+export function signingState(steps: Step[], decisions: Decision[], team: Team, status?: StatusDoc | null): SigningState {
   const find = (re: RegExp) => steps.find((s) => re.test(s.title));
   const sign = find(/\bsign\b.*operating agreement/i) || null;
   const before: SigningItem[] = [];
@@ -730,9 +733,21 @@ export function signingState(steps: Step[], decisions: Decision[], team: Team): 
       });
   }
 
-  // 3. The state approves the LLC.
+  // 3. The state approves the LLC. Only an explicit signal counts: a date in the status doc (llcApprovedOn) or a
+  //    separate step about the state's approval marked done. Finishing the filing step is not approval.
   const filing = find(/articles of organization/i);
-  if (filing) before.push({ id: "state", label: "New Mexico approves the LLC", who: "state", done: filing.status === "done", note: filing.status === "done" ? undefined : filing.status === "todo" ? "Not filed yet" : "Filed, waiting on the state", stepId: filing.id });
+  const approvalStep = steps.find((s) => s !== filing && /(state|new mexico|llc)\b.*\bapprov|\bapproval of the llc/i.test(s.title) && !/air force|outside-activity|daf/i.test(s.title));
+  const approved = !!status?.llcApprovedOn || approvalStep?.status === "done";
+  if (filing || approvalStep || status?.llcApprovedOn) {
+    before.push({
+      id: "state",
+      label: "New Mexico approves the LLC",
+      who: "state",
+      done: approved,
+      note: approved ? undefined : filingNote(filing),
+      stepId: (approvalStep || filing)?.id,
+    });
+  }
 
   // Alongside: not written down as a condition for signing.
   const spouse = find(/spouse consent/i);
@@ -742,4 +757,24 @@ export function signingState(steps: Step[], decisions: Decision[], team: Team): 
 
   const left = before.filter((i) => !i.done).length;
   return { step: sign, signed, before, alongside, left };
+}
+
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** "Filed Oct 23, approval pending (~early Nov)" from the filing step's note; plain fallbacks when it says less. */
+export function filingNote(filing?: Step): string {
+  if (!filing || filing.status === "todo") return "Not filed yet";
+  const m = filing.note.match(/\bfiled\b[^.]*?\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* (\d{1,2})\b/i);
+  const behind = filing.note.match(/about (\d{1,2}) days behind/i);
+  let eta = "";
+  const said = filing.note.match(/\b(early|mid|late)[- ](Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*/i);
+  if (said) eta = `${said[1].toLowerCase()} ${said[2]}`;
+  else if (m && behind) {
+    const mo = MON.findIndex((x) => x.toLowerCase() === m[1].toLowerCase().slice(0, 3));
+    const day = +m[2] + +behind[1];
+    const dim = new Date(2001, mo + 1, 0).getDate();
+    const nm = day > dim ? (mo + 1) % 12 : mo;
+    const d2 = day > dim ? day - dim : day;
+    eta = `${d2 <= 10 ? "early" : d2 <= 20 ? "mid" : "late"} ${MON[nm]}`;
+  }
+  return `${m ? `Filed ${MON[MON.findIndex((x) => x.toLowerCase() === m[1].toLowerCase().slice(0, 3))]} ${m[2]}` : "Filed"}, approval pending${eta ? ` (~${eta})` : ""}`;
 }

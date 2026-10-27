@@ -46,7 +46,7 @@ For **code changes**, clone this repo and open a pull request; GitHub Actions ch
 | `decisions` | a decision | `date`, `title`, `detail`, `agree` (null = settled before agreements existed; `{}` or `{member_id: timestamp}` = open until both agree), `proposed_by` |
 | `names` | a name idea | `name`, `note`, `sort_order`, `votes` (`{member_id: true}`) |
 | `products` | a product | `sort_order`, `name`, `status`, `platforms`, `summary`, `next`, `in_company`, `repo` |
-| `meta` | page text | `id` = `studio` (`data`: name, subtitle, links) or `status` (`data`: summary, asOf) |
+| `meta` | page text | `id` = `studio` (`data`: name, subtitle, links) or `status` (`data`: summary, asOf, and `llcApprovedOn` = YYYY-MM-DD, set only when the state has approved the LLC; the signing card says "approval pending" until it exists) |
 | `ledger` | a purchase | mirrors `ledger/expenses.csv` in the studio repo (the CSV stays the record); the Founders panel totals it by `paid_by`. `csv_key` is the stable key the mirror upserts by (agents only; null for a line typed in the page) |
 | `docs` | a markdown document in the Docs tab | `folder` (Plan, Money, Decisions, Game, Admin), `title`, `slug` (unique), `body_md`, `visibility` (`shared` or `private`), `owner` (a `members.id`), `source_path`, `source_url` (the file on GitHub), `source_commit` (last commit that changed it), `synced_at` (last checked against the source). Founders read only; agents write (see below) |
 | `hours` | one founder's hours for one week | `member_id`, `week_start` (a Monday), `hours`, `note`. Both founders read all rows; each writes only their own in the app |
