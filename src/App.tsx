@@ -122,7 +122,7 @@ function TopBar({ name, theme, setTheme }: { name: string; theme: ThemePref; set
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 transition-opacity duration-200"
-        style={{ opacity: scrolled ? 1 : 0, background: "linear-gradient(rgb(var(--bg) / 0.95) 0%, rgb(var(--bg) / 0.88) 70%, rgb(var(--bg) / 0) 100%)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}
+        style={{ opacity: scrolled ? 1 : 0, background: "linear-gradient(rgb(var(--bg) / 0.97) 0%, rgb(var(--bg) / 0.97) 86%, rgb(var(--bg) / 0) 100%)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}
       />
       <div className="relative mx-auto flex max-w-[1240px] items-center gap-3 py-2.5" style={pad}>
         <a href="#overview" onClick={(e) => (e.preventDefault(), window.scrollTo({ top: 0, behavior: "smooth" }))} className="tap flex min-w-0 items-center gap-2.5 rounded-full py-1 pr-2" aria-label={`${BRAND} ${name}, back to the top`}>

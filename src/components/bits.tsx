@@ -329,3 +329,21 @@ export function AddField({
     </form>
   );
 }
+
+// ---- Long text, folded to a few lines until asked for -----------------------------------------
+export function Folded({ text, className, lines = 5, over = 340 }: { text: string; className?: string; lines?: number; over?: number }) {
+  const [open, setOpen] = useState(false);
+  const long = text.length > over;
+  return (
+    <div>
+      <p className={cn("whitespace-pre-wrap", className)} style={!open && long ? { display: "-webkit-box", WebkitLineClamp: lines, WebkitBoxOrient: "vertical", overflow: "hidden" } : undefined}>
+        {text}
+      </p>
+      {long && (
+        <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="tap hit mt-1 inline-flex min-h-[32px] items-center text-[13.5px] font-semibold text-accent hover:underline">
+          {open ? "Show less" : "Read the rest"}
+        </button>
+      )}
+    </div>
+  );
+}

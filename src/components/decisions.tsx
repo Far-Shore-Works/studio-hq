@@ -4,7 +4,7 @@ import { Check, Plus, Scale } from "lucide-react";
 import { nowIso, useAuthor, useStore } from "@/lib/store";
 import { agreedIds, dayLabel, isSettled, localDay, sortDecisions, type Decision, type Role } from "@/lib/model";
 import { cn } from "@/lib/utils";
-import { Avatar, Empty, Section, SkelRows } from "./bits";
+import { Avatar, Empty, Folded, Section, SkelRows } from "./bits";
 
 export function Decisions() {
   const { decisions, team, ready, canWrite } = useStore();
@@ -154,7 +154,7 @@ function OpenDecision({ d }: { d: Decision }) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
         <div className="min-w-0 flex-1">
           <h3 className="text-[15.5px] font-semibold leading-snug">{d.title}</h3>
-          {d.detail && <p className="mt-1 whitespace-pre-wrap text-[14px] leading-relaxed text-ink2">{d.detail}</p>}
+          {d.detail && <Folded text={d.detail} className="mt-1 text-[14px] leading-relaxed text-ink2" />}
           <p className="mt-1.5 text-[12.5px] text-muted">
             {d.proposedBy ? (d.proposedBy === me ? "You proposed this" : `Proposed by ${author(d.proposedBy)}`) : "Proposed"}
             {d.date ? ` · ${dayLabel(d.date)}` : ""}
