@@ -128,3 +128,15 @@ html, body { margin: 0; height: 100%; background: var(--sky); color: var(--ink);
   #top, .leftcol, .hint, .sheet, .results, .modalCard { zoom: 1.25; }
   .power { zoom: 1.2; }
 }
+
+.cardMats { display: flex; gap: 5px; align-items: center; margin-top: 5px; }
+.matLab { font-size: 12px; color: var(--soft); font-weight: 900; margin-right: 1px; }
+.mat { font-size: 12.5px; font-weight: 900; padding: 1px 8px 2px; border-radius: 999px; border: 2px solid var(--ink); line-height: 1.25; }
+.mat.glass.on { background: #BDE9FF; } .mat.wood.on { background: #EDBE72; } .mat.stone.on { background: #B4BECB; }
+.mat.on::before { content: "\2713 "; }
+.mat.off { background: #fff; color: #9AAEC6; border-color: #C7D6E8; text-decoration: line-through; text-decoration-thickness: 1.5px; }
+
+.replayWrap { margin: 10px auto 2px; width: 100%; max-width: 380px; }
+.replayLab { font-size: 13px; color: var(--soft); font-weight: 900; text-align: left; margin: 0 4px 3px; }
+#resReplay { width: 100%; display: block; border-radius: 18px; border: 3px solid var(--ink); background: #BFE6FF; }
+.cardMats { min-height: 27px; }

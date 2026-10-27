@@ -1,7 +1,8 @@
 // The share card: text with a small picture of what is left of the tower, and a PNG version.
 import { alive, CELL } from './tower.js';
 
-export const SHARE_URL = 'topple.farshoreworks.com';   // placeholder until the domain exists
+import { GAME_NAME, SHARE_HOST } from './brand.js';
+export const SHARE_URL = SHARE_HOST;
 const pct = (x) => `${Math.round(x * 100)}%`;
 
 /** Emoji picture of the tower: orange = still standing, white = gone, blank = never there. */
@@ -34,7 +35,7 @@ export function towerEmoji(tower) {
 export function buildShareText(day) {
   const parts = day.objects.map((o, i) => `${o.name.toLowerCase()} ${pct(day.deltas[i] || 0)}`);
   const lines = [
-    `Topple #${day.number}`,
+    `${GAME_NAME} #${day.number}`,
     `Tower ${pct(day.total)} down${day.rankText ? `  ${day.rankText}` : ''}`,
     parts.join(' · '),
     towerEmoji(day.tower),

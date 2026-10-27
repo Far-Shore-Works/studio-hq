@@ -3,36 +3,40 @@
 import { C } from './palette.js';
 import { CELL } from './tower.js';
 import { G } from './physics.js';
+import { SIM_G } from './sim.js';
 
-const WAVE = 0.62;
+const WAVE = 0.36;          // seconds between waves of falling blocks
+const fallTime = (rows) => Math.sqrt((2 * Math.max(0.25, rows) * CELL) / SIM_G);
 
 export function buildPlan(res, towerBefore) {
   const imp = res.impact;
   const lastT = res.flight.path[res.flight.path.length - 1].t;
-  const plan = { res, tc: imp ? imp.time : null, flightEnd: lastT, items: [], byBlock: new Map(), end: lastT + 0.9 };
+  // No impact: the object lands and rolls (sim body from just before touchdown). stopT is when
+  // the sim takes the object over from the flight arithmetic.
+  const plan = { res, tc: imp ? imp.time : null, flightEnd: lastT, items: [], byBlock: new Map(), end: lastT + 2.0, stopT: lastT - 0.04 };
   const push = (it) => { plan.items.push(it); if (!plan.byBlock.has(it.id)) plan.byBlock.set(it.id, []); plan.byBlock.get(it.id).push(it); };
   if (!imp) return plan;
   let at = imp.time + 0.04;
-  for (const e of res.events) if (e.k === 'hit') { push({ ...e, at }); at += 0.09; }
-  const base = at + 0.4;
+  for (const e of res.events) if (e.k === 'hit') { push({ ...e, at }); plan.stopT = at; at += 0.09; }
+  const base = at + 0.5;          // a beat of creaking before anything topples
   const falls = new Map();
   for (const e of res.events) if (e.k === 'fall') {
     const rows = Math.max(1, e.from - e.to), side = e.toC !== e.fromC;
-    const it = { ...e, at: base + (e.wave - 1) * WAVE, d: (side ? 0.45 : 0.22) + 0.1 * rows };
+    const it = { ...e, at: base + (e.wave - 1) * WAVE, d: fallTime(rows) + (side ? 0.14 : 0) };
     falls.set(`${e.id}|${e.wave}`, it); push(it);
   }
   for (const e of res.events) {
     if (e.k === 'break') {
       const f = falls.get(`${e.id}|${e.wave}`);
-      push({ ...e, at: f ? f.at + f.d : base + (e.wave - 1) * WAVE + (e.cause === 'tip' ? 0.05 : 0.3) });
+      push({ ...e, at: f ? f.at + f.d : base + (e.wave - 1) * WAVE + (e.cause === 'tip' ? 0.05 : 0.25) });
     } else if (e.k === 'dmg') {
       const f = falls.get(`${e.id}|${e.wave}`);
-      push({ ...e, at: f ? f.at + f.d : base + (e.wave - 1) * WAVE + 0.3 });
+      push({ ...e, at: f ? f.at + f.d : base + (e.wave - 1) * WAVE + 0.25 });
     }
   }
   let end = at;
   for (const it of plan.items) end = Math.max(end, it.at + (it.d || 0));
-  plan.end = end + 0.75;
+  plan.end = Math.max(end + 1.25, plan.stopT + 1.9);
   for (const list of plan.byBlock.values()) list.sort((a, b) => a.at - b.at);
   return plan;
 }
@@ -80,6 +84,10 @@ export function projectileAt(plan, obj, t, g = G) {
   const rad = Math.max(0.05, Math.min(0.5, obj.size / 2)) * 0.9;
   if (!imp) { const p = along(path, t); return { ...p, rot: p.y <= 0.001 ? 0 : spin, rest: t > plan.flightEnd, y: Math.max(rad * 0.5, p.y) }; }
   if (t <= imp.time) { const p = along(path, t); return { ...p, rot: spin, rest: false }; }
+  if (plan.stopT != null && t < plan.stopT) {
+    const f = (t - imp.time) / Math.max(0.001, plan.stopT - imp.time);
+    return { x: imp.x + (imp.stopX - imp.x) * f, y: imp.y + (imp.stopY - imp.y) * f, rot: spin, rest: false };
+  }
   const dt = t - imp.time;
   if (plan.res.endPath) {
     const p = along(plan.res.endPath, dt);
@@ -99,20 +107,44 @@ export function projectileAt(plan, obj, t, g = G) {
 }
 
 // ---- particles ---------------------------------------------------------------------------
+export const MAX_PARTICLES = 170;
 export function makeParticles(rnd) {
   const list = [];
-  const add = (p) => list.push({ rot: 0, vr: 0, g: 0, vx: 0, vy: 0, ...p, max: p.life });
+  const add = (p) => {
+    if (list.length >= MAX_PARTICLES) { const i = list.findIndex((q) => q.kind !== 'text' && q.kind !== 'ring'); if (i >= 0) list.splice(i, 1); else return; }
+    list.push({ rot: 0, vr: 0, g: 0, vx: 0, vy: 0, drag: 0, ...p, max: p.life });
+  };
   return {
     list,
     chips(x, y, col, n, dirx = 1) {
       for (let i = 0; i < n; i++) add({ kind: 'chip', x, y, vx: (rnd() * 6 - 1.5) * dirx, vy: 2 + rnd() * 6, g: 16, size: 5 + rnd() * 5, rot: rnd() * 6, vr: (rnd() - 0.5) * 14, col, life: 0.9 + rnd() * 0.5 });
     },
     puff(x, y, n = 3) { for (let i = 0; i < n; i++) add({ kind: 'puff', x: x + (rnd() - 0.5), y: y + (rnd() - 0.5), vx: (rnd() - 0.5) * 2, vy: 0.5 + rnd() * 1.5, size: 5 + rnd() * 6, life: 0.45 + rnd() * 0.25 }); },
+    /** soft dust cloud: big slow puffs, warmer than the white impact puff */
+    dust(x, y, n = 4, size = 9, spread = 2.2) {
+      for (let i = 0; i < n; i++) add({ kind: 'dust', x: x + (rnd() - 0.5) * spread * 0.6, y: y + rnd() * 0.3, vx: (rnd() - 0.5) * spread * 1.6, vy: 0.3 + rnd() * 1.4, drag: 2.2, size: size * (0.7 + rnd() * 0.7), life: 0.7 + rnd() * 0.5 });
+    },
+    /** long thin wood splinters */
+    splinters(x, y, n = 6, dx = 1) {
+      for (let i = 0; i < n; i++) add({ kind: 'splinter', x, y, vx: (rnd() * 7 - 2) * dx, vy: 2 + rnd() * 6, g: 15, size: 4 + rnd() * 3.5, rot: rnd() * 6, vr: (rnd() - 0.5) * 18, life: 0.8 + rnd() * 0.5 });
+    },
+    /** glass shards with a white glint */
+    shards(x, y, n = 8) {
+      for (let i = 0; i < n; i++) add({ kind: 'shard', x, y, vx: (rnd() - 0.5) * 11, vy: 2 + rnd() * 7, g: 14, size: 4 + rnd() * 4, rot: rnd() * 6, vr: (rnd() - 0.5) * 20, life: 0.85 + rnd() * 0.5 });
+    },
+    glint(x, y, n = 4) { for (let i = 0; i < n; i++) add({ kind: 'glint', x: x + (rnd() - 0.5) * 1.6, y: y + (rnd() - 0.2) * 1.4, vx: (rnd() - 0.5) * 2, vy: 0.5 + rnd() * 1.5, size: 5 + rnd() * 5, rot: rnd(), life: 0.45 + rnd() * 0.4 }); },
+    ring(x, y, size = 14) { add({ kind: 'ring', x, y, size, life: 0.34 }); },
+    rays(x, y, size = 20) { add({ kind: 'rays', x, y, size, life: 0.3, rot: rnd() * 3 }); },
     burst(x, y, size = 16) { add({ kind: 'burst', x, y, size, life: 0.28 }); },
     stars(x, y, n = 6) { for (let i = 0; i < n; i++) add({ kind: 'star', x, y, vx: (rnd() - 0.5) * 9, vy: 3 + rnd() * 6, g: 12, size: 7 + rnd() * 5, rot: rnd() * 6, vr: 6, life: 0.9 + rnd() * 0.4 }); },
-    text(x, y, text, size = 26, col = '#FFFFFF') { add({ kind: 'text', x, y, vy: 1.4, text, size, col, life: 1.7 }); },
+    text(x, y, text, size = 26, col = '#FFFFFF') { add({ kind: 'text', x, y, vy: 0.7, text, size, col, life: 1.9 }); },
     update(dt) {
-      for (const p of list) { p.life -= dt; p.vy -= p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt; }
+      for (const p of list) {
+        p.life -= dt; p.vy -= p.g * dt;
+        if (p.drag) { const k = Math.max(0, 1 - p.drag * dt); p.vx *= k; p.vy *= k; }
+        p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+        if (p.g && p.y < 0.1 && p.vy < 0 && p.kind !== 'text') { p.y = 0.1; p.vy *= -0.3; p.vx *= 0.6; p.vr *= 0.5; }   // bounce off the ground
+      }
       for (let i = list.length - 1; i >= 0; i--) if (list[i].life <= 0) list.splice(i, 1);
     },
   };

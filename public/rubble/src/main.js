@@ -5,6 +5,10 @@ import { devResetDay, devResetAll, loadStreak } from './store.js';
 import { streakNow } from './streak.js';
 import { initMenu } from './menu.js';
 import { EPOCH } from './daily.js';
+import { GAME_NAME } from './brand.js';
+
+document.title = GAME_NAME;
+const logo = document.getElementById('logo'); if (logo) logo.textContent = GAME_NAME;
 
 const q = new URLSearchParams(location.search);
 const dev = q.has('dev');

@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#BFE6FF">
-<title>Topple</title>
+<title>Wreckdle</title>
 <link rel="stylesheet" href="css/style.css">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
@@ -18,7 +18,7 @@
   <canvas id="cv"></canvas>
 
   <header id="top">
-    <div class="logo">Topple</div>
+    <div class="logo" id="logo">Wreckdle</div>
     <div id="stars" class="stars" aria-label="Throws left"></div>
     <div class="meta"><span id="dayno" class="chip"></span><span id="streakChip" class="chip hidden"></span><button id="muteBtn" class="chip mute" aria-label="Sound on"></button><button id="menuBtn" class="chip mute" aria-label="Menu"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 7h16M4 12h16M4 17h16" stroke="#2F4B6E" stroke-width="2.6" stroke-linecap="round"/></svg></button></div>
   </header>
@@ -31,6 +31,7 @@
         <div id="cardName" class="cardName"></div>
         <div id="cardStats" class="cardStats"></div>
         <div id="cardSize" class="cardSize"></div>
+        <div id="cardMats" class="cardMats"></div>
       </div>
     </section>
     <div id="tray" class="tray" aria-label="Pick which object to throw next"></div>
@@ -47,8 +48,9 @@
 
   <section id="results" class="results hidden">
     <div class="resCard">
-      <div class="resTitle" id="resTitle">Topple #1</div>
+      <div class="resTitle" id="resTitle">Wreckdle #1</div>
       <div class="resBig"><span id="resPct">0%</span><small>of the tower down</small></div>
+      <div class="replayWrap hidden"><div class="replayLab">Best hit, replayed</div><canvas id="resReplay"></canvas></div>
       <canvas id="resTower" width="360" height="190"></canvas>
       <ul id="resThrows" class="resThrows"></ul>
       <div id="resCompare" class="resCompare hidden"></div>
@@ -81,6 +83,7 @@
     </div>
   </div>
 </div>
+<script src="vendor/matter.min.js"></script>
 <script type="module" src="src/main.js"></script>
 </body>
 </html>

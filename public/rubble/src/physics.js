@@ -1,4 +1,4 @@
-// Topple physics (engine carried over from the Three Throws prototype). Pure functions, no DOM, no Math.* beyond abs/floor/min/max.
+// Rubble physics (engine carried over from the Three Throws prototype). Pure functions, no DOM, no Math.* beyond abs/floor/min/max.
 //
 // Fairness rule: every phone must land the object on the same spot, to the last digit.
 // So the flight uses ONLY + - * / (exactly specified by IEEE 754 and identical in every

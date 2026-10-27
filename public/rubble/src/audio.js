@@ -40,9 +40,9 @@ export function sfx(name, p = 1) {
   if (muted || !ctx) return;
   try {
     const rate = 0.9 + ((n * 7) % 5) * 0.05;
-    if (name === 'glass' && sample('glass', 0.55, rate)) return;
-    if (name === 'wood' && sample('wood', 0.7, rate)) return;
-    if (name === 'stone' && sample('stone', 0.75, rate)) return;
+    if (name === 'glass') { SOUNDS.tinkle(ctx, p); if (sample('glass', 0.5, rate)) return; }
+    if (name === 'wood') { SOUNDS.crack(ctx, p * 0.6); if (sample('wood', 0.65, rate)) return; }
+    if (name === 'stone') { if (sample('stone', 0.7, rate)) return; }
     if (name === 'bonk' && sample('bonk', 0.6, rate)) return;
     if (name === 'thunk' && sample('thunk', 0.5 + 0.4 * p, 0.85 + 0.2 * (1 - p))) return;
     (SOUNDS[name] || (() => {}))(ctx, p);
@@ -65,7 +65,7 @@ function noise(c, { t = 0.2, v = 0.2, lp = 2000, at = 0 }) {
 }
 const SOUNDS = {
   pull(c, p) { tone(c, { f: 180 + p * 260, f2: 220 + p * 300, t: 0.05, type: 'triangle', v: 0.05 }); },
-  launch(c) { tone(c, { f: 520, f2: 140, t: 0.18, type: 'triangle', v: 0.18 }); noise(c, { t: 0.12, v: 0.08, lp: 3000 }); },
+  launch(c) { tone(c, { f: 520, f2: 140, t: 0.18, type: 'triangle', v: 0.14 }); noise(c, { t: 0.12, v: 0.08, lp: 3000 }); SOUNDS.twang(c); },
   thunk(c, p) { tone(c, { f: 110, f2: 45, t: 0.22, type: 'sine', v: 0.45 * Math.min(1, 0.4 + p) }); noise(c, { t: 0.1, v: 0.18 * p, lp: 900 }); },
   crack(c) { noise(c, { t: 0.14, v: 0.22, lp: 4500 }); tone(c, { f: 900, f2: 300, t: 0.06, type: 'square', v: 0.06 }); },
   glass(c) { tone(c, { f: 1800, f2: 1200, t: 0.2, type: 'triangle', v: 0.08 }); noise(c, { t: 0.12, v: 0.1, lp: 8000 }); },
@@ -75,5 +75,20 @@ const SOUNDS = {
   bonk(c) { tone(c, { f: 320, f2: 130, t: 0.12, type: 'sine', v: 0.25 }); },
   star(c) { tone(c, { f: 880, t: 0.12, type: 'triangle', v: 0.12 }); tone(c, { f: 1320, t: 0.2, type: 'triangle', v: 0.12, at: 0.08 }); },
   win(c) { [523, 659, 784, 1047].forEach((f, i) => tone(c, { f, t: 0.22, type: 'triangle', v: 0.14, at: i * 0.1 })); },
+  twang(c) { tone(c, { f: 340, f2: 85, t: 0.24, type: 'sawtooth', v: 0.08 }); tone(c, { f: 700, f2: 190, t: 0.13, type: 'triangle', v: 0.08 }); },
+  whoosh(c) { noise(c, { t: 0.35, v: 0.07, lp: 2500 }); },
+  boom(c, p) { noise(c, { t: 0.55, v: 0.28 * p, lp: 320 }); tone(c, { f: 85, f2: 26, t: 0.55, type: 'sine', v: 0.5 * p }); },
+  thud(c, p) { noise(c, { t: 0.12, v: 0.12 * p + 0.04, lp: 650 }); tone(c, { f: 125, f2: 52, t: 0.13, type: 'sine', v: 0.22 * p + 0.05 }); },
+  bounce(c, p) { tone(c, { f: 230 + 120 * p, f2: 520 + 240 * p, t: 0.15, type: 'sine', v: 0.2 }); },
+  squeak(c, p) { const f = 1000 + Math.random() * 600; tone(c, { f, f2: f * 1.5, t: 0.08, type: 'square', v: 0.04 * (0.5 + p) }); tone(c, { f: f * 1.45, f2: f * 0.85, t: 0.12, type: 'square', v: 0.04 * (0.5 + p), at: 0.07 }); },
+  tinkle(c, p) { for (let i = 0; i < 4; i++) tone(c, { f: 2200 + Math.random() * 2600, t: 0.09, type: 'sine', v: 0.035, at: i * 0.045 + Math.random() * 0.02 }); },
+  creak(c, p) { const f = 90 + Math.random() * 50; tone(c, { f, f2: f * 0.72, t: 0.3, type: 'sawtooth', v: 0.035 }); noise(c, { t: 0.25, v: 0.05, lp: 700 }); tone(c, { f: f * 3, f2: f * 2.2, t: 0.12, type: 'square', v: 0.012, at: 0.1 }); },
   miss(c) { tone(c, { f: 300, f2: 180, t: 0.3, type: 'triangle', v: 0.12 }); },
 };
+
+/** Test hook: play a synth sound without the safety net, so a typo shows up as an error. Returns the names it played. */
+export function sfxStrict() {
+  if (!ctx) throw new Error('audio not unlocked');
+  for (const name of Object.keys(SOUNDS)) SOUNDS[name](ctx, 0.7);
+  return Object.keys(SOUNDS);
+}

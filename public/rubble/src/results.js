@@ -9,6 +9,8 @@ import { fetchRank, mockRank } from './api.js';
 import { openCollection, openArchive } from './menu.js';
 import { streakNow } from './streak.js';
 import { sfx } from './audio.js';
+import { GAME_NAME } from './brand.js';
+import { startReplay } from './replay.js';
 
 const $ = (id) => document.getElementById(id);
 const pct = (x) => Math.round(x * 100);
@@ -36,7 +38,7 @@ export function makeShareImage(game, w = 900, h = 600) {
   g.fillStyle = C.ink; g.textAlign = 'left';
   g.font = '900 54px ui-rounded, "SF Pro Rounded", system-ui, sans-serif';
   roundRect(g, 36, 30, 230, 74, 22); g.fillStyle = '#FFFFFF'; g.fill(); g.lineWidth = 5; g.strokeStyle = C.ink; g.stroke();
-  g.fillStyle = C.ink; g.fillText('Topple', 56, 86);
+  g.fillStyle = C.ink; g.fillText(GAME_NAME, 56, 86);
   g.font = '900 150px ui-rounded, "SF Pro Rounded", system-ui, sans-serif';
   g.lineWidth = 12; g.strokeStyle = '#FFFFFF'; g.lineJoin = 'round'; g.strokeText(`${pct(fractionDown(tower))}%`, 40, 250); g.fillStyle = C.ink; g.fillText(`${pct(fractionDown(tower))}%`, 40, 250);
   g.font = '900 34px ui-rounded, "SF Pro Rounded", system-ui, sans-serif'; g.fillStyle = C.ink;
@@ -66,7 +68,7 @@ export function showResults(game, restored) {
   const text = buildShareText(day);
   game.shareText = text;
 
-  $('resTitle').textContent = `${practice ? 'Practice \u00B7 ' : ''}Topple #${p.number} \u00B7 ${p.recipeName}`;
+  $('resTitle').textContent = `${practice ? 'Practice \u00B7 ' : ''}${GAME_NAME} #${p.number} \u00B7 ${p.recipeName}`;
   $('resPct').textContent = `${pct(total)}%`;
   const ctx = $('resTower').getContext('2d');
   ctx.clearRect(0, 0, 360, 190);
@@ -104,9 +106,9 @@ export function showResults(game, restored) {
     const cv = makeShareImage(game);
     cv.toBlob(async (blob) => {
       try {
-        if (navigator.canShare && navigator.canShare({ files: [new File([blob], 'topple.png', { type: 'image/png' })] })) { await navigator.share({ files: [new File([blob], `topple-${p.number}.png`, { type: 'image/png' })], text }); return; }
+        if (navigator.canShare && navigator.canShare({ files: [new File([blob], `${GAME_NAME.toLowerCase()}.png`, { type: 'image/png' })] })) { await navigator.share({ files: [new File([blob], `${GAME_NAME.toLowerCase()}-${p.number}.png`, { type: 'image/png' })], text }); return; }
       } catch { /* fall through to download */ }
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `topple-${p.number}.png`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${GAME_NAME.toLowerCase()}-${p.number}.png`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
     }, 'image/png');
   };
 
@@ -129,6 +131,7 @@ export function showResults(game, restored) {
   tick(); clearInterval(game._cd); game._cd = setInterval(tick, 1000);
   $('results').classList.remove('hidden');
   $('card').classList.add('hidden');
+  try { startReplay(game, $('resReplay')); } catch (e) { console.warn('replay failed', e); $('resReplay').parentElement.classList.add('hidden'); }
   if (!restored) { sfx('win'); if (total >= 0.5) confetti(); }
 }
 

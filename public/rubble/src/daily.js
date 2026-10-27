@@ -6,7 +6,7 @@ import { dragK, maxRange } from './physics.js';
 import { buildTower } from './tower.js';
 import { calibrate } from './calibrate.js';
 
-export const GAME_NAME = 'Topple';
+export { GAME_NAME } from './brand.js';
 export const EPOCH = '2026-10-27';   // puzzle #1 (placeholder until the launch date is chosen)
 export const SEED_SALT = 'topple-v1';
 export const MARS_G = 3.71;
