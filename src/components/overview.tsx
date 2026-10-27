@@ -179,14 +179,14 @@ function UpNext({ who }: { who: Role }) {
 
 /** What is left before the founders sign the operating agreement, read from the gameplan and decisions. */
 function SigningCard() {
-  const { steps, decisions, team, ready, roleName } = useStore();
+  const { steps, decisions, team, ready, roleName, role } = useStore();
   const known = ready.steps && ready.decisions && ready.members;
   const { focusStep, scrollTo } = useUi();
   const st = useMemo(() => signingState(steps, decisions, team), [steps, decisions, team]);
   // With nothing written down to wait on, say so rather than claim it is ready.
   const unknown = !st.signed && st.before.length === 0;
   if (!known || !st.step) return null;
-  const who = (w: SigningItem["who"]) => (w === "state" ? "The state" : w === "both" ? "Both" : roleName(w));
+  const who = (w: SigningItem["who"]) => (w === "state" ? "The state" : w === "both" ? "Both" : role === w ? "You" : roleName(w));
   const open = (i: SigningItem) => (i.id === "agree" ? scrollTo("decisions") : i.stepId ? focusStep(i.stepId) : undefined);
   const row = (i: SigningItem) => (
     <li key={i.id}>
@@ -201,7 +201,7 @@ function SigningCard() {
           </span>
           {i.note && !i.done && <span className="block text-[12.5px] leading-snug text-muted">{i.note}</span>}
         </span>
-        <span className="chip shrink-0">{i.done ? "Done" : who(i.who)}</span>
+        <span className={cn("chip shrink-0", !i.done && role && i.who === role && "chip-accent font-semibold")}>{i.done ? "Done" : who(i.who)}</span>
       </button>
     </li>
   );
