@@ -167,11 +167,11 @@ function Hero() {
           <p className="mt-2 text-[16px] leading-relaxed text-muted">{meta.subtitle || "Chris and Aaron's studio: where things stand, what's next, and what we've decided."}</p>
         </div>
         {meta.links.length > 0 && (
-          <ul className="flex flex-wrap gap-2" aria-label="Links">
+          <ul className="scroll-x -mx-4 flex gap-2 px-4 max-md:flex-nowrap sm:mx-0 sm:flex-wrap sm:px-0" aria-label="Links">
             {meta.links.map((l, i) => (
-              <li key={i}>
+              <li key={i} className="shrink-0">
                 {l.url ? (
-                  <a href={l.url} target="_blank" rel="noopener noreferrer" className="tap inline-flex h-8 items-center gap-1.5 rounded-full bg-raised px-3.5 max-md:h-10 text-[13.5px] font-semibold text-ink shadow-[var(--card-shadow)] hover:text-accent">
+                  <a href={l.url} target="_blank" rel="noopener noreferrer" className="tap inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-raised px-3.5 max-md:h-10 text-[13.5px] font-semibold text-ink shadow-[var(--card-shadow)] hover:text-accent">
                     {l.label}
                     <ArrowUpRight size={14} className="text-faint" />
                   </a>
