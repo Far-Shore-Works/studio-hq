@@ -238,6 +238,7 @@ test("text: mojibake from an import is repaired, clean text is untouched", () =>
   assert.equal(fixMojibake("PC · Steam"), "PC · Steam");
   assert.equal(fixMojibake("Plain text, ¬ alone"), "Plain text, ¬ alone");
   assert.equal(fixMojibake("PC ¬∑ Steam — details"), "PC · Steam — details");
+  assert.equal(fixMojibake("Jos√© and ¬∑ ok"), "Jos√© and · ok"); // a letter decode is left alone
   assert.deepEqual(splitPlatforms("PC ¬∑ Steam"), ["PC", "Steam"]);
 });
 
@@ -264,6 +265,7 @@ test("signing: reads what is open from the plan", () => {
     "Both fill Schedules C and F (B only if keeping something out)",
     "New Mexico approves the LLC",
   ]);
+  assert.equal(signingState([step("sign", { title: "Sign the operating agreement", note: "still open: Aaron reviews; Sign once both agree." })], [], team).before.map((i) => i.label).join("|"), "Aaron reviews");
   assert.equal(r.before[0].who, "aaron");
   assert.equal(r.before[0].note, "Waiting on Aaron");
   assert.equal(r.left, 4);

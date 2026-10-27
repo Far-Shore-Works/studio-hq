@@ -118,7 +118,8 @@ export function fixMojibake(s: string): string {
     }
     try {
       const out = new TextDecoder("utf-8", { fatal: true }).decode(new Uint8Array(bytes));
-      return out.length < run.length ? out : run;
+      // Only punctuation and symbols that imports commonly mangle; a decode that lands on a letter is left alone.
+      return out.length < run.length && /^[·•“”‘’‚„—–…‹›©®™°±×÷→←↑↓✓✔§¶€£¢ ]+$/.test(out) ? out : run;
     } catch {
       return run;
     }
@@ -707,7 +708,7 @@ export function signingState(steps: Step[], decisions: Decision[], team: Team): 
   const signed = !!sign && sign.status === "done";
 
   // 1. Both founders agree to the terms (the decision about the agreement).
-  const dec = decisions.find((d) => /operating agreement/i.test(d.title) && d.agree);
+  const dec = decisions.filter((d) => /operating agreement/i.test(d.title) && d.agree).sort((a, b) => (b.createdAt || b.date).localeCompare(a.createdAt || a.date))[0];
   if (dec) {
     const ids = agreedIds(dec);
     const chris = !!team.chris && ids.includes(team.chris);
@@ -717,12 +718,12 @@ export function signingState(steps: Step[], decisions: Decision[], team: Team): 
   }
 
   // 2. What the signing step says is still open ("Still open: ...; ... Sign once ...").
-  const m = sign?.note.match(/Still open:\s*(.+?)(?:\.\s+(?:Sign|Not signed)\b|\.\s*$|$)/s);
+  const m = sign?.note.match(/Still open:\s*(.+?)(?:\.\s+(?:Sign|Not signed)\b|\.\s*$|$)/is);
   if (m && !signed) {
     m[1]
       .split(/;\s*/)
       .map((t) => t.trim().replace(/\.$/, ""))
-      .filter(Boolean)
+      .filter((t) => t && !/^(sign|not signed)\b/i.test(t))
       .forEach((t, i) => {
         const who: Owner = /^aaron\b/i.test(t) ? "aaron" : /^chris\b/i.test(t) ? "chris" : "both";
         before.push({ id: "open-" + i, label: t.charAt(0).toUpperCase() + t.slice(1), who, done: false, stepId: sign!.id });
