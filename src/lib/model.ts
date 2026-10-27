@@ -784,3 +784,30 @@ export function filingNote(filing?: Step): string {
   }
   return `${m ? `Filed ${MON[MON.findIndex((x) => x.toLowerCase() === m[1].toLowerCase().slice(0, 3))]} ${m[2]}` : "Filed"}, approval pending${eta ? ` (~${eta})` : ""}`;
 }
+
+// ---- Your move ----------------------------------------------------------------------------------
+export interface MoveItem {
+  kind: "decision" | "step";
+  id: string;
+  title: string;
+  /** One short line of context. */
+  sub: string;
+  status?: Status;
+  due?: string;
+  /** Shared with the other founder. */
+  both?: boolean;
+}
+/** What is waiting on one founder: decisions they haven't agreed to yet, then their open steps (their own and shared),
+ *  doing first, then blocked, then the soonest due, then plan order. */
+export function yourMove(steps: Step[], decisions: Decision[], team: Team, role: Role): { items: MoveItem[]; total: number } {
+  const me = team[role];
+  const items: MoveItem[] = [];
+  for (const d of sortDecisions(decisions))
+    if (d.agree && !isSettled(d, team) && me && !agreedIds(d).includes(me)) items.push({ kind: "decision", id: d.id, title: d.title, sub: "Waiting for your Agree" });
+  const rank = (s: Step) => (s.status === "doing" ? 0 : s.status === "blocked" ? 1 : 2);
+  steps
+    .filter((s) => s.status !== "done" && (s.owner === role || s.owner === "both"))
+    .sort((a, b) => rank(a) - rank(b) || (a.due && b.due ? a.due.localeCompare(b.due) : a.due ? -1 : b.due ? 1 : 0) || a.phase - b.phase || a.order - b.order)
+    .forEach((s) => items.push({ kind: "step", id: s.id, title: s.title, sub: PHASES[s.phase - 1].name, status: s.status, due: s.due, both: s.owner === "both" }));
+  return { items, total: items.length };
+}

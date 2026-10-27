@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  fixMojibake, signingState, filingNote, normStep, normDecision, normName, normProduct, normMeta, normStatus, parseCost, costSummary, currentPhase,
+  fixMojibake, signingState, filingNote, yourMove, normStep, normDecision, normName, normProduct, normMeta, normStatus, parseCost, costSummary, currentPhase,
   upNext, isSettled, rankNames, dueInfo, roleOf, moneyRange, phaseStats, splitPlatforms, safeUrl, type Step,
   normDoc, searchDocs, plainText, sourceLink, sourceParts, siblingDocs, normHours, hoursStats, weekStartOf, addDays, weekLabel, fmtHours, normLedger, moneyIn, dollars, type Doc,
 } from "../src/lib/model.ts";
@@ -305,4 +305,23 @@ test("signing: odd approval data", () => {
   assert.equal(it.done, false);
   assert.equal(it.note, "Filed Dec 28, approval pending (~early Jan)");
   assert.equal(filingNote(step("f", { title: "F", status: "doing", note: "Filed Feb 20 2028, about 9 days behind" })), "Filed Feb 20, approval pending (~early Mar)".replace("early Mar", "late Feb"));
+});
+
+test("your move: only what waits on the viewer", () => {
+  const team = { chris: "c", aaron: "a" };
+  const steps = [
+    step("a1", { owner: "aaron", status: "todo", phase: 5, order: 10 }),
+    step("c1", { owner: "chris", status: "todo", phase: 2, order: 10 }),
+    step("c2", { owner: "chris", status: "doing", phase: 3, order: 10 }),
+    step("b1", { owner: "both", status: "todo", phase: 3, order: 20 }),
+    step("c3", { owner: "chris", status: "done" }),
+  ];
+  const open = normDecision("d1", { title: "Terms", agree: { c: "x" } })!;
+  const settled = normDecision("d2", { title: "Old" })!;
+  const c = yourMove(steps, [open, settled], team, "chris");
+  assert.deepEqual(c.items.map((i) => i.id), ["c2", "c1", "b1"]); // Chris already agreed to d1; settled ones never show
+  const a = yourMove(steps, [open, settled], team, "aaron");
+  assert.deepEqual(a.items.map((i) => i.id), ["d1", "b1", "a1"].sort((x, y) => (x === "d1" ? -1 : y === "d1" ? 1 : 0)));
+  assert.equal(a.items[0].kind, "decision");
+  assert.equal(yourMove([], [], team, "aaron").total, 0);
 });

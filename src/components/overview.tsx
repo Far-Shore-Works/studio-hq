@@ -2,13 +2,13 @@ import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, ChevronDown, CircleDollarSign, FileSignature, Flag, ListChecks, Scale } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { costSummary, currentPhase, dueInfo, isSettled, moneyRange, phaseStats, PHASES, signingState, upNext, type Role, type SigningItem } from "@/lib/model";
+import { costSummary, currentPhase, dueInfo, isSettled, moneyRange, phaseStats, PHASES, signingState, upNext, yourMove, type Role, type SigningItem } from "@/lib/model";
 import { cn } from "@/lib/utils";
 import { Avatar, Count, Skel, StatusGlyph } from "./bits";
 import { useUi } from "./ui";
 
 export function Overview() {
-  const { steps, decisions, team, ready, mode } = useStore();
+  const { steps, decisions, team, ready, mode, role: viewer } = useStore();
   const { scrollTo } = useUi();
   const noData = (mode === "error" || mode === "offline") && steps.length === 0;
   const [costsOpen, setCostsOpen] = useState(false);
@@ -24,6 +24,7 @@ export function Overview() {
 
   return (
     <div id="overview" className="space-y-3">
+      <MoveCard />
       <SigningCard />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {/* Phase */}
@@ -115,9 +116,10 @@ export function Overview() {
         )}
       </AnimatePresence>
 
-      <div className="grid gap-3 md:grid-cols-2">
-        <UpNext who="chris" />
-        <UpNext who="aaron" />
+      {/* The viewer's own items are in "Your move" above, so this shows only the other founder's. */}
+      <div className={cn("grid gap-3", !viewer && "md:grid-cols-2")}>
+        {(!viewer || viewer !== "chris") && <UpNext who="chris" />}
+        {(!viewer || viewer !== "aaron") && <UpNext who="aaron" />}
       </div>
     </div>
   );
@@ -238,6 +240,72 @@ function SigningCard() {
             </>
           )}
         </>
+      )}
+    </section>
+  );
+}
+
+/** What is waiting on the signed-in founder: decisions to agree to, then their open steps. */
+function MoveCard() {
+  const { steps, decisions, team, ready, role, roleName, roleProfile } = useStore();
+  const { focusStep, scrollTo } = useUi();
+  const mv = useMemo(() => (role ? yourMove(steps, decisions, team, role) : null), [steps, decisions, team, role]);
+  if (!role) return null;
+  if (!ready.steps || !ready.decisions || !ready.members)
+    return (
+      <section className="card px-5 pb-4 pt-4 sm:px-6" aria-busy="true" aria-label="Your move, loading">
+        <Skel className="h-5 w-1/2" />
+        <div className="mt-4 space-y-3">
+          <Skel className="h-4 w-full" />
+          <Skel className="h-4 w-4/5" />
+        </div>
+      </section>
+    );
+  const items = mv!.items;
+  const shown = items.slice(0, 5);
+  return (
+    <section className="card px-5 pb-2 pt-4 sm:px-6" aria-labelledby="move-h" style={{ boxShadow: "var(--card-shadow), inset 0 0 0 1.5px rgb(var(--accent) / 0.35)" }}>
+      <header className="flex items-center gap-2.5">
+        <Avatar profile={roleProfile(role)} label={roleName(role)} role={role} size={26} />
+        <h2 id="move-h" className="min-w-0 flex-1 text-[16px] font-bold tracking-[-0.01em]">
+          Your move, {roleName(role)}
+        </h2>
+        <span className={cn("chip shrink-0 font-semibold", items.length ? "chip-accent" : "chip-ok")}>{items.length ? `${items.length} open` : "All clear"}</span>
+      </header>
+      {items.length === 0 ? (
+        <p className="py-3 text-[14px] text-muted">Nothing is waiting on you right now.</p>
+      ) : (
+        <ul className="rows mt-1">
+          {shown.map((i) => {
+            const due = dueInfo(i.due || "");
+            return (
+              <li key={i.kind + i.id}>
+                <button type="button" onClick={() => (i.kind === "decision" ? scrollTo("decisions") : focusStep(i.id))} className="group flex min-h-[46px] w-full items-center gap-3 rounded-lg py-1.5 text-left">
+                  <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center" aria-hidden="true">
+                    {i.kind === "decision" ? <Scale size={18} className="text-accent" /> : <StatusGlyph status={i.status || "todo"} size={20} />}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[14.5px] leading-snug text-ink group-hover:text-accent">
+                      <span className="sr-only">{i.kind === "decision" ? "Decision to agree to: " : "Step: "}</span>
+                      {i.title}
+                    </span>
+                    <span className="block text-[12.5px] leading-snug text-muted">
+                      {i.sub}
+                      {i.status === "doing" ? " · Doing" : i.status === "blocked" ? " · Blocked" : ""}
+                      {i.both ? ` · with ${roleName(role === "chris" ? "aaron" : "chris")}` : ""}
+                    </span>
+                  </span>
+                  {due && <span className={cn("chip shrink-0", due.tone === "late" ? "chip-bad" : due.tone === "soon" ? "chip-late" : "")}>{due.label}</span>}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {items.length > shown.length && (
+        <button type="button" onClick={() => scrollTo("gameplan")} className="tap mb-1 mt-1 min-h-[40px] text-[13.5px] font-semibold text-accent hover:underline">
+          {items.length - shown.length} more in the gameplan
+        </button>
       )}
     </section>
   );
