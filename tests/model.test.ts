@@ -341,3 +341,10 @@ test("coming up: due dates in order, plus the expected state approval until it h
   assert.equal(list[0].approx, true);
   assert.deepEqual(comingUp(steps, { summary: "x", asOf: "", llcApprovedOn: "2026-11-02" }, now).map((i) => i.date), ["2027-01-10", "2027-03-15"]);
 });
+
+test("dates: impossible due dates are dropped; a yearless filing note keeps its year across New Year", () => {
+  assert.equal(normStep("x", { title: "T", due: "2026-99-99" })!.due, "");
+  const f = step("f", { title: "File the articles of organization", status: "doing", note: "Filed Dec 28. About 9 days behind." });
+  assert.equal(filingEtaDate(f, new Date("2027-01-15T12:00:00Z")), "2027-01-06"); // filed Dec 28 2026, not Dec 28 2027
+  assert.equal(filingEtaDate(f, new Date("2026-12-30T12:00:00Z")), "2027-01-06");
+});

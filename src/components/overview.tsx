@@ -267,7 +267,11 @@ function MoveCard() {
       </section>
     );
   const items = mv!.items;
-  const shown = items.slice(0, 5);
+  // Decisions are always shown (there are few); the cap is for steps, and "more" points at the gameplan.
+  const decs = items.filter((i) => i.kind === "decision");
+  const stepItems = items.filter((i) => i.kind === "step");
+  const shown = [...decs, ...stepItems.slice(0, 5)];
+  const more = stepItems.length - 5;
   return (
     <section className="card px-5 pb-2 pt-4 sm:px-6" aria-labelledby="move-h" style={{ boxShadow: "var(--card-shadow), inset 0 0 0 1.5px rgb(var(--accent) / 0.35)" }}>
       <header className="flex items-center gap-2.5">
@@ -307,9 +311,9 @@ function MoveCard() {
           })}
         </ul>
       )}
-      {items.length > shown.length && (
+      {more > 0 && (
         <button type="button" onClick={() => scrollTo("gameplan")} className="tap mb-1 mt-1 min-h-[40px] text-[13.5px] font-semibold text-accent hover:underline">
-          {items.length - shown.length} more in the gameplan
+          {more} more {more === 1 ? "step" : "steps"} in the gameplan
         </button>
       )}
     </section>
@@ -377,7 +381,7 @@ function GamesCard() {
           <li key={p.id}>
             <button type="button" onClick={() => scrollTo("products")} className="group flex min-h-[46px] w-full items-center gap-3 rounded-lg py-1.5 text-left">
               <span className="min-w-0 flex-1 text-[14.5px] font-semibold leading-snug text-ink group-hover:text-accent">{p.name}</span>
-              <span className={cn("chip shrink-0", tone(p.status))}>{p.status || "No status"}</span>
+              <span className={cn("chip !h-auto min-w-0 max-w-[62%] shrink !whitespace-normal py-[3px] text-right leading-tight", tone(p.status))}>{p.status || "No status"}</span>
             </button>
           </li>
         ))}

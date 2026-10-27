@@ -154,7 +154,7 @@ export function normStep(id: string, d: Raw): Step | null {
     cost: str(d.cost).trim(),
     note: str(d.note).trim(),
     detail: str(d.detail).trim(),
-    due: isDay(due) ? due : "",
+    due: isRealDay(due) ? due : "",
     updatedAt: str(d.updatedAt),
     createdAt: str(d.createdAt),
   };
@@ -763,6 +763,11 @@ export function signingState(steps: Step[], decisions: Decision[], team: Team, s
   return { step: sign, signed, before, alongside, left };
 }
 
+/** The year a yearless "Mon D" most recently happened in: this year, or last year if that date is still ahead. */
+function yearFor(mo: number, day: number, now: Date): number {
+  const y = now.getUTCFullYear();
+  return Date.UTC(y, mo, day) > now.getTime() + 86400000 ? y - 1 : y;
+}
 const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 /** "Filed Oct 23, approval pending (~early Nov)" from the filing step's note; plain fallbacks when it says less. */
 export function filingNote(filing?: Step): string {
@@ -775,7 +780,7 @@ export function filingNote(filing?: Step): string {
   else if (m && behind) {
     // Day arithmetic on a real calendar date (year from the note, else this year), so month ends and leap years hold.
     const mo = MON.findIndex((x) => x.toLowerCase() === m[1].toLowerCase().slice(0, 3));
-    const yr = +(filing.note.match(/\b(20\d{2})\b/)?.[1] || new Date().getFullYear());
+    const yr = +(filing.note.match(/\b(20\d{2})\b/)?.[1] || yearFor(mo, +m[2], new Date()));
     const at = new Date(Date.UTC(yr, mo, +m[2] + +behind[1]));
     const d2 = at.getUTCDate();
     eta = `${d2 <= 10 ? "early" : d2 <= 20 ? "mid" : "late"} ${MON[at.getUTCMonth()]}`;
@@ -834,7 +839,7 @@ export function filingEtaDate(filing: Step | undefined, now = new Date()): strin
   const behind = filing.note.match(/about (\d{1,2}) days behind/i);
   if (!m || !behind) return "";
   const mo = MON.findIndex((x) => x.toLowerCase() === m[1].toLowerCase().slice(0, 3));
-  const yr = +(filing.note.match(/\b(20\d{2})\b/)?.[1] || now.getFullYear());
+  const yr = +(filing.note.match(/\b(20\d{2})\b/)?.[1] || yearFor(mo, +m[2], now));
   return new Date(Date.UTC(yr, mo, +m[2] + +behind[1])).toISOString().slice(0, 10);
 }
 /** Dated, not-done steps in date order, plus the expected state approval while it is still pending. */
